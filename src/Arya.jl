@@ -9,57 +9,55 @@ import PhysicalConstants.CODATA2018 as c
 
 export c # useful for me
 
-function __init__()
-    # @require plotlyjs interactive_arya()
-    add_arya()
+const COLORS = ["#0173b2", "#de8f05", "#029e73", "#d55e00", "#cc78bc", 
+          "#ca9161", "#fbafe4", "#949494", "#ece133", "#56b4e9"]
 
-    theme(:arya)
+
+include("themes.jl")
+include("histogram.jl")
+
+function __init__()
+    add_arya()
+    init()
+end
+
+
+
+function init(mode=:default)
+    if mode == :default
+        set_default()
+    elseif mode == :interactive
+        set_interactive()
+    elseif mode == :journal
+        set_latex()
+    elseif mode == :presentation
+        set_presentation()
+    else
+        error("Mode $mode not recognized")
+    end
 end # function
 
 
-function add_arya()
-    sty = PlotTheme(
-        msw = 0,
-        ms = 10,
-        lw = 1,
-        framestyle=:box,
-        grid=false,
-        minorticks=true,
-
-       )
-
-    add_theme(:arya, sty)
-end
-            
-
-function freedman_diaconis(x)
-    n = length(x)
-    q75, q25 = quantile(x, [0.75, 0.25])
-    h = 2 * (q75 - q25) / n^(1/3)
-    return h
+function set_default()
+    gr()
+    theme(:arya)
 end
 
-function calc_bins(x, min, max)
-    N = freedman_diaconis(x)
-    bins = collect(min:0.1:max)
-    return bins
+function set_interactive()
+    plotlyjs()
+    theme(:arya, ticks=:native, framestyle=:axes)
 end
 
+function set_latex()
+    pgfplotsx()
+    theme(:arya)
+end
 
-function hist2d(x, y; xlim=Nothing, ylim=Nothing, kwargs...)
-    if xlim != Nothing
-        xbins = calc_bins(x, xlim[1], xlim[2])
-    end 
-    if ylim != Nothing
-        ybins = calc_bins(y, ylim[1], ylim[2])
-    end
+function set_presentation()
+    gr()
+    theme(:arya)
+end
 
-
-    p = histogram2d(x, y; bins=(xbins, ybins),
-                    kwargs...)
-
-    return p
-end 
 
 function set_ticks!(;tl=0.02)
     p = Plots.current()
@@ -75,6 +73,37 @@ function set_ticks!(;tl=0.02)
 end
 
 function _set_minor_ticks(;)
+end
+
+function set_mpl_theme()
+    rcParams = Plots.PythonPlot.matplotlib.rcParams
+    rcParams["figure.dpi"] = 200
+    rcParams["pdf.fonttype"] = 42
+
+    rcParams["text.usetex"] = true
+    rcParams["mathtext.fontset"] = "custom"
+    rcParams["text.latex.preamble"] = "\\usepackage{amsmath} \\usepackage{txfonts} \\usepackage[T1]{fontenc}"
+    rcParams["axes.formatter.use_mathtext"] = true
+    rcParams["font.family"] = "serif"
+    rcParams["text.antialiased"] = true
+
+    lw = 1
+    ms = 2.5
+    L = 10/3
+    l = L / 2
+    rcParams["lines.linewidth"] = lw
+    rcParams["lines.markersize"] = ms
+    rcParams["axes.linewidth"] = lw
+    rcParams["xtick.major.width"] = lw
+    rcParams["ytick.major.width"] = lw
+    rcParams["xtick.minor.width"] = lw/2
+    rcParams["ytick.minor.width"] = lw/2
+
+    rcParams["xtick.major.size"] = L
+    rcParams["ytick.major.size"] = L
+    rcParams["xtick.minor.size"] = l
+    rcParams["ytick.minor.size"] = l
+
 end
 
 
