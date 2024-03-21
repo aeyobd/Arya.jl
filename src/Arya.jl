@@ -6,8 +6,9 @@ using Unitful, UnitfulAstro
 import StatsBase: quantile
 
 import PhysicalConstants.CODATA2018 as c
+using LaTeXStrings
 
-export c # useful for me
+export c, @L_str
 
 const COLORS = ["#0173b2", "#de8f05", "#029e73", "#d55e00", "#cc78bc", 
           "#ca9161", "#fbafe4", "#949494", "#ece133", "#56b4e9"]
@@ -18,7 +19,14 @@ include("histogram.jl")
 
 function __init__()
     add_arya()
-    init()
+
+    if Plots.backend() isa Plots.PythonPlotBackend
+        theme(:arya, ticks=:native)
+        set_mpl_theme()
+    else
+        init()
+    end
+        
 end
 
 
@@ -32,6 +40,8 @@ function init(mode=:default)
         set_latex()
     elseif mode == :presentation
         set_presentation()
+    elseif mode == :mpl
+        set_mpl_theme()
     else
         error("Mode $mode not recognized")
     end
@@ -75,9 +85,12 @@ end
 function _set_minor_ticks(;)
 end
 
-function set_mpl_theme()
-    rcParams = Plots.PythonPlot.matplotlib.rcParams
-    rcParams["figure.dpi"] = 200
+function set_mpl_theme(;dpi=200, lw=1, ms=2.5, L=10/3, l=L/2)
+    mpl = Plots.PythonPlot.matplotlib
+
+    path = "$(@__DIR__)/journal.mplstyle"
+    rcParams = mpl.rcParams
+    rcParams["figure.dpi"] = dpi
     rcParams["pdf.fonttype"] = 42
 
     rcParams["text.usetex"] = true
@@ -87,10 +100,7 @@ function set_mpl_theme()
     rcParams["font.family"] = "serif"
     rcParams["text.antialiased"] = true
 
-    lw = 1
-    ms = 2.5
-    L = 10/3
-    l = L / 2
+
     rcParams["lines.linewidth"] = lw
     rcParams["lines.markersize"] = ms
     rcParams["axes.linewidth"] = lw
@@ -103,6 +113,13 @@ function set_mpl_theme()
     rcParams["ytick.major.size"] = L
     rcParams["xtick.minor.size"] = l
     rcParams["ytick.minor.size"] = l
+    rcParams["xtick.direction"] = "in"
+    rcParams["ytick.direction"] = "in"
+    rcParams["xtick.top"] = true
+    rcParams["ytick.right"] = true
+    rcParams["xtick.minor.visible"] = true
+    rcParams["ytick.minor.visible"] = true
+    rcParams["xtick.minor.top"] = true
 
 end
 
