@@ -2,17 +2,19 @@ const pt_to_in = 1/72
 
 function add_arya()
     arya_theme = PlotTheme(;
-        msw = 0,
+        msc = :auto,
         framestyle=:box,
         grid=false,
         minorticks=true,
-        make_font_settings()...
+        dpi=400,
+        fmt=:png,
+        make_font_settings(typeface="Times")...
        )
 
     add_theme(:arya, arya_theme)
 end
 
-function make_font_settings(fontsize=12, typeface="Helvetica")
+function make_font_settings(;fontsize=12, typeface="Helvetica")
     small = floor(Int, 0.8*fontsize)
     large = ceil(Int, 1.2*fontsize)
     medium = fontsize
