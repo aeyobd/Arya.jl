@@ -1,5 +1,8 @@
 module Arya
+
 export theme_arya
+export COLORS
+export value, err, errscatter
 
 using Makie
 COLORS = Makie.wong_colors()
@@ -43,4 +46,6 @@ end
 
 
 include("plots.jl")
+
+include("MeasurementsExt.jl")
 end # module
