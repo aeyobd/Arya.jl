@@ -1,3 +1,31 @@
+"""
+    make_limits(x[, limits])
+
+Calculates the limits of x.
+"""
+function make_limits(x, limits::Tuple=(nothing, nothing))
+    lower, upper = limits
+
+    filt = isfinite.(x)
+    x = x[filt]
+
+    if lower == nothing
+        lower = minimum(x)
+    end
+
+    if upper == nothing
+        upper = maximum(x)
+    end
+
+    return lower, upper
+end
+
+
+function make_limits(x, limits::Nothing)
+    return make_limits(x, (nothing, nothing))
+end
+
+
 
 function _make_limits(x, y, limits::Tuple{T, T}) where T <: Union{Nothing, Tuple}
     xlimits, ylimits = limits
@@ -19,23 +47,3 @@ function _make_limits(x, y, limits::Tuple)
 end
 
 
-function _make_limits(x, limits::Nothing)
-    return _make_limits(x, (nothing, nothing))
-end
-
-function _make_limits(x, limits::Tuple)
-
-    lower, upper = limits
-
-    filt = isfinite.(x)
-    x = x[filt]
-
-    if lower == nothing
-        lower = minimum(x)
-    end
-
-    if upper == nothing
-        upper = maximum(x)
-    end
-
-    return lower, upper

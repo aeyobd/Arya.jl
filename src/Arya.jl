@@ -46,8 +46,8 @@ function __init__()
 end
 
 
-include("utils.jl")
-include("plots.jl")
+include("limits.jl")
+include("bandwidth.jl")
 include("histogram.jl")
 
 include("MeasurementsExt.jl")
