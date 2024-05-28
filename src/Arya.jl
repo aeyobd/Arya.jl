@@ -10,8 +10,9 @@ COLORS = Makie.wong_colors()
 function theme_arya()
     arya = Theme(
         fontsize=20,
-        px_per_unit=5,
-        pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 360 pixels
+        px_per_unit=5, # controls resolution for rasterization
+        pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 72*px_per_unit pixels
+        colormap=:magma,
         fonts = (;
             regular = Makie.texfont(:regular),
             bold = Makie.texfont(:bold),
@@ -45,7 +46,10 @@ function __init__()
 end
 
 
+include("utils.jl")
 include("plots.jl")
+include("histogram.jl")
 
 include("MeasurementsExt.jl")
+
 end # module
