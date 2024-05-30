@@ -1,30 +1,221 @@
-using Makie
+import Base: @kwdef
+
+midpoint(x) = (x[1:end-1] + x[2:end]) ./ 2
 
 
-"""
-    hist2d!(ax, x, y; nbins=10, color=:viridis)
+@kwdef struct Histogram
+    bins::AbstractVector
+    values::AbstractVector
 
-Plot a 2D histogram on the given axis `ax` with the data `x` and `y`. The number of bins in each direction is given by `nbins` and the colormap is given by `color`.
-"""
-function hist2d!(ax, x, y; weights=ones(Int64, length(x)), bins=10, limits=nothing, kwargs...)
+    normalization::Symbol = :count
+    closed::Symbol = :left
+end
 
-    if limits == nothing && bins isa Int
-        limits = ax.limits.val
-    end
-    H, xedges, yedges = histogram2d(x, y, bins, 
-        weights=weights, limits=limits)
-    xcenters = (xedges[1:end-1] + xedges[2:end]) / 2
-    ycenters = (yedges[1:end-1] + yedges[2:end]) / 2
-    heatmap!(ax, xcenters, ycenters, H; kwargs...)
+Base.iterate(h::Histogram) = (h.bins, h.weights)
+
+
+@kwdef struct RollingHistogram
+    sample_points::AbstractVector
+    values::AbstractVector
+
+    bandwidth
+    normalization::Symbol
+end
+
+
+@kwdef struct Histogram2D
+    bins::Tuple{AbstractVector, AbstractVector}
+    weights::AbstractVector
 end
 
 
 
-function hist2d(x, y; bins=10, kwargs...)
-    fig = Figure()
-    ax = Axis(fig[1, 1])
-    p = hist2d!(ax, x, y; bins=bins, kwargs...)
-    return Makie.FigureAxisPlot(fig, ax, p)
+"""
+    calc_histogram(x[, bins]; weights, normalization, limits, closed)
+
+Computes the histogram of a vector x with respect to the bins with optional weights. Returns the bin edges and the histogram.
+"""
+function calc_histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
+        weights=ones(Int64, length(x)), 
+        normalization=:count,
+        limits=nothing,
+        closed=:left,
+    )
+
+    limits = calc_limits(x, limits)
+    bins = make_bins(x, limits, bins)
+
+    if closed == :left
+        bin_index = bin_index_left
+    elseif closed == :right
+        bin_index = bin_index_right
+    else
+        error("closed must be either :left or :right")
+    end
+
+    N = length(bins)
+    hist = zeros(eltype(weights), N-1)
+
+    for i in eachindex(x)
+        idx = bin_index(bins, x[i])
+        if idx != -1
+            hist[idx] += weights[i]
+        end
+    end
+
+    h =  Histogram(bins=bins, weights=hist, normalization=normalization, closed=closed)
+    normalize!(h, normalization)
+
+    return h
+end
+
+
+
+"""
+    rolling_histogram(x[, bandwidth]; weights, normalization, limits, samples)
+
+Computes the rolling histogram of a vector x with respect to the bandwidth. Returns the bin edges and the histogram.
+
+"""
+function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaconis;
+        weights=ones(Int64, length(x)), 
+        normalization=:pdf, 
+        limits=nothing, 
+        samples=10000,
+    )
+
+    if bandwidth isa Function
+        bandwidth = bandwidth(x)
+    end
+    limits = calc_limits(x, limits)
+
+    limits = (limits[1] - bandwidth, limits[2] + bandwidth)
+
+    bins = make_bins(x, limits, samples-1)
+
+    hist = zeros(length(bins))
+
+    N = length(x)
+
+    for i in 1:N
+        # range of bins >= x[i] - bandwidth and <= x[i] + bandwidth
+        idx_l = searchsortedfirst(bins, x[i] - bandwidth)
+        idx_h = searchsortedlast(bins, x[i] + bandwidth)
+
+        if idx_l < 1
+            println("idx_l < 1")
+        elseif idx_h > length(bins)
+            println("idx_h > length(bins)")
+        end
+
+        # boundary truncation
+        idx_l = max(1, idx_l)
+        idx_h = min(length(bins), idx_h)
+        width = (idx_h - idx_l + 1)
+
+        hist[idx_l:idx_h] .+= weights[i] / width
+    end
+
+    h =  RollingHistogram(x=bins, weights=hist, bandwidth=bandwidth, normalization=normalization)
+    normalize!(h, normalization; dx=bins[2] - bins[1])
+
+    return h
+end
+
+
+function normalize!(hist::Histogram, normalization=:pdf)
+    if normalization == :pdf
+        pdf = sum(hist.weights .* diff(hist.bins))
+        weights = hist.weights ./ pdf
+    elseif normalization == :count
+        weights = hist.weights 
+    else
+        error("normalization must be either :pdf or :count")
+    end
+
+    hist.weights .= weights
+end
+
+
+function normalize!(hist::RollingHistogram, normalization=:pdf; dx=nothing)
+
+    if normalization == :pdf
+        pdf = sum(hist.weights .* dx)
+        weights = hist.weights ./ pdf
+    elseif normalization == :count
+        weights = hist.weights 
+    else
+        error("normalization must be either :pdf or :count")
+    end
+
+    hist.weights .= weights
+end
+
+
+
+"""
+bin_index is index of last bin  <= x
+as such bin_index is in 0 to length(bins)
+and either extrema represent a value outside the bins
+"""
+function bin_index_left(bins, x)
+    idx = searchsortedlast(bins, x) 
+    if (idx < 1) || (idx >= length(bins))
+        idx = -1
+    end
+
+    return idx
+end
+
+
+"""
+bin_index is index of last bin  <= x
+as such bin_index is in 0 to length(bins)
+and either extrema represent a value outside the bins
+"""
+function bin_index_right(bins, x)
+    idx = searchsortedfirst(bins, x) - 1 
+    if (idx < 1) || (idx >= length(bins))
+        idx = -1
+    end
+    return idx
+end
+
+
+
+
+function make_bins(x, limits, bins::Nothing=nothing; bandwidth=nothing)
+    if bandwidth == nothing
+        error("either bins or bandwidth must be specified")
+    end
+
+    bins = limits[1]:bandwidth:(limits[2]+bandwidth)
+
+    return bins
+end
+
+
+function make_bins(x, limits, bins::Int)
+    bins = LinRange(limits[1], limits[2], bins+1)
+
+    return bins
+end
+
+
+function make_bins(x, limits, bins::AbstractVector)
+    if !issorted(bins)
+        error("bins must be sorted")
+    end
+
+    if length(unique(bins)) != length(bins)
+        error("bins must be unique")
+    end
+end
+
+
+function make_bins(x, limits, bins::Function)
+    h = bins(x)
+    return make_bins(x, limits, bandwidth=h)
 end
 
 
@@ -77,7 +268,7 @@ function histogram2d(x, y, bins::Tuple{Int, Int}; limits=nothing, kwargs...)
     x1 = x[isfinite.(x)]
     y1 = y[isfinite.(y)]
 
-    (xmin, xmax), (ymin, ymax) = _make_limits(x, y, limits)
+    (xmin, xmax), (ymin, ymax) = calc_limits(x, y, limits)
 
     xedges = range(xmin, stop=xmax, length=bins[1]+1)
     yedges = range(ymin, stop=ymax, length=bins[2]+1)
@@ -102,31 +293,4 @@ function make_equal_number_bins(x, n)
     return [percentile(x, i) for i in LinRange(0, 100, n+1)]
 end
 
-
-"""
-    calc_histogram(x, bins; weights=Nothing)
-
-Computes the histogram of a vector x with respect to the bins with optional weights. Returns the bin edges and the histogram.
-"""
-function calc_histogram(x::AbstractVector, bins::AbstractVector; weights=Nothing)
-    if weights == Nothing
-        weights = ones(Int64, length(x))
-    end
-    Nbins = length(bins) - 1
-    hist = zeros(Nbins)
-    for i in 1:Nbins
-        idx = (x .>= bins[i]) .& (x .< bins[i+1])
-        hist[i] = sum(weights[idx])
-    end
-    return bins, hist
-end
-
-
-function calc_histogram(x::AbstractVector, bins::Int=20; weights=Nothing, xlim=Nothing)
-    if xlim == Nothing
-        xlim = (minimum(x[isfinite.(x)]), maximum(x[isfinite.(x)]))
-    end
-
-    return calc_histogram(x, LinRange(xlim[1], xlim[2], bins); weights=weights)
-end
 

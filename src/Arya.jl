@@ -1,55 +1,28 @@
 module Arya
 
+using Makie
+using DocStringExtensions: TYPEDEF, FIELDS
+
+
 export theme_arya
 export COLORS
 export value, err, errscatter
 
-using Makie
-COLORS = Makie.wong_colors()
 
-function theme_arya()
-    arya = Theme(
-        fontsize=20,
-        px_per_unit=5, # controls resolution for rasterization
-        pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 72*px_per_unit pixels
-        colormap=:magma,
-        fonts = (;
-            regular = Makie.texfont(:regular),
-            bold = Makie.texfont(:bold),
-            italic =  Makie.texfont(:italic),
-            bold_italic =  Makie.texfont(:bolditalic),
-            ),
+include("interface.jl")
+include("limits.jl")
+include("bandwidth.jl")
+include("histogram.jl")
+include("kde.jl")
 
-        Axis = ( 
-            xminorticksvisible = true,
-            yminorticksvisible = true,
-            xminorticks = IntervalsBetween(5),
-            yminorticks = IntervalsBetween(5),
-            xticksmirrored=true,
-            yticksmirrored = true,
-            xtickalign=1,
-            xminortickalign=1,
-            ytickalign=1,
-            yminortickalign=1
-        ),
+include("MeasurementsExt.jl")
 
-        CairoMakie = (; px_per_unit=5, type="png"),
-        GLMakie = (; px_per_unit=5)
+include("themes.jl")
 
-    )
-
-    return arya
-end
 
 function __init__()
     set_theme!(theme_arya())
 end
 
-
-include("limits.jl")
-include("bandwidth.jl")
-include("histogram.jl")
-
-include("MeasurementsExt.jl")
 
 end # module

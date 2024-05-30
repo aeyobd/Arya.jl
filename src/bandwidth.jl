@@ -3,7 +3,7 @@
 
 
 
-function binwidth_freedman_diaconis(x::AbstractVector)
+function bandwidth_freedman_diaconis(x::AbstractVector)
     n = length(x)
     q25, q75 = quantile(x, [0.25, 0.75])
     iqr = q75 - q25
@@ -12,10 +12,11 @@ function binwidth_freedman_diaconis(x::AbstractVector)
 end
 
 
-function binwidth_sturge(x::AbstractVector)
+function bins_sturge(x::AbstractVector)
+    limits = calc_limits(x)
     n = length(x)
-    k = ceil(Int, log2(n) + 1)
-    return k
+    h = (limits[2] - limits[1]) / (log2(n) + 1)
+    return h
 end
 
 
@@ -32,7 +33,7 @@ where `n` is the number of observations and `σ` is the standard deviation of th
 
 Scott, D. W. (1979). Biometrika. 66(3):605–10
 """
-function binwidth_scott(x::AbstractVector)
+function bandwidth_scott(x::AbstractVector)
     n = length(x)
     σ = std(x)
     h = 3.5 * σ / n^(1/3)

@@ -1,9 +1,9 @@
 """
-    make_limits(x[, limits])
+    calc_limits(x[, limits])
 
 Calculates the limits of x.
 """
-function make_limits(x, limits::Tuple=(nothing, nothing))
+function calc_limits(x, limits::Tuple=(nothing, nothing))
     lower, upper = limits
 
     filt = isfinite.(x)
@@ -21,29 +21,35 @@ function make_limits(x, limits::Tuple=(nothing, nothing))
 end
 
 
-function make_limits(x, limits::Nothing)
-    return make_limits(x, (nothing, nothing))
+function calc_limits(x, limits::Nothing)
+    return calc_limits(x, (nothing, nothing))
 end
 
 
 
-function _make_limits(x, y, limits::Tuple{T, T}) where T <: Union{Nothing, Tuple}
+
+"""
+    calc_limits(x, y[, limits])
+
+Given both x and y data, calculates the limits of both x and y.
+"""
+function calc_limits(x, y, limits::Tuple{T, T}) where T <: Union{Nothing, Tuple}
     xlimits, ylimits = limits
-    xlimits = _make_limits(x, xlimits)
-    ylimits = _make_limits(y, ylimits)
+    xlimits = calc_limits(x, xlimits)
+    ylimits = calc_limits(y, ylimits)
     return xlimits, ylimits
 end
 
-function _make_limits(x, y, limits::Nothing)
-    return _make_limits(x, y, (nothing, nothing))
+function calc_limits(x, y, limits::Nothing=nothing)
+    return calc_limits(x, y, (nothing, nothing))
 end
 
 
 
-function _make_limits(x, y, limits::Tuple)
+function calc_limits(x, y, limits::Tuple)
     xlimits = limits[1:2]
     ylimits = limits[3:4]
-    return _make_limits(x, y, (xlimits, ylimits))
+    return calc_limits(x, y, (xlimits, ylimits))
 end
 
 
