@@ -1,41 +1,61 @@
 # code to interface with varius external packages
 
 import StatsBase as sb
-import StatsBase: quantile, percentile
 import NearestNeighbors as nn
 
 
 
-function kth_nn(x::AbstractArray; k=5, metric=:euclidean)
-    tree = nn.KDTree(x, Euclidean())
-    idxs, dists = knn(tree, x, k+1, true)
+"""
+    kth_nns(x, k=5, metric=:euclidean)
 
-    dist = [d[end] for d in dists]
-    return dists
+Compute the k-th nearest neighbor of each point in `x` using the Euclidean distance.
+
+If x is a NxD matrix, then 
+"""
+function knn(x::AbstractArray; k=5, metric=:euclidean)
+    if x isa AbstractVector
+        x = x'
+    end
+    tree = nn.KDTree(x)
+    idxs, dists = nn.knn(tree, x, k+1, true)
+
+    idxs = [d[end] for d in idxs]
+    dists = [d[end] for d in dists]
+    return idxs, dists
 end
 
 
-function mean(x::AbstractArray)
-    return sum(x) / length(x)
+function mean(x::AbstractArray; dims=:)
+    return sb.mean(x, dims=dims)
 end
 
-function mean(x::AbstractArray, w::AbstractArray)
-    return sum(x .* w) / sum(w)
+function mean(x::AbstractArray, w::AbstractArray; dims=:)
+    return sb.mean(x, sb.weights(w), dims=dims)
 end
 
-function std(x::AbstractArray)
-    return sqrt(var(x))
+function std(x::AbstractArray; dims=:)
+    return sb.std(x, dims=dims)
 end
 
 function std(x::AbstractArray, w::AbstractArray)
-    return sqrt(var(x, w))
+    return sb.std(x, sb.weights(w))
 end
 
 
-function var(x::AbstractArray; df=1)
-    return sum((x .- mean(x)).^2) / (length(x) - df)
+"""
+    percentile(x, p)
+
+The percentile of a vector `x` at `p`.
+"""
+function percentile(x::AbstractArray, p::Real)
+    return quantile(x, p)
 end
 
-function var(x::AbstractArray, w::AbstractArray; df=0)
-    return sum(w .* (x .- mean(x, w)).^2) / (sum(w) - df)
+
+"""
+    quantile(x, p)
+
+"""
+function quantile(x::AbstractArray, p::Real)
+    return sb.quantile(x, p)
 end

@@ -2,7 +2,7 @@
 include("setup.jl")
 
 
-tests = ["limits", "histogram"]
+tests = ["limits", "histogram", "interface", "bayesian_blocks"]
 
 for test in tests
     @testset "$test" begin

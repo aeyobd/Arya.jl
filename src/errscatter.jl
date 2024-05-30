@@ -1,15 +1,3 @@
-using Measurements
-
-value(a::Measurement) = a.val
-value(a::Real) = a
-err(a::Measurement) = a.err
-err(a::Real) = 0
-
-
-function Makie.convert_single_argument(y::Array{Measurement{T}}) where T
-	return value.(y)
-end
-
 
 @recipe(ErrScatter) do scene
     Attributes(
@@ -37,4 +25,3 @@ function Makie.plot!(sc::ErrScatter)
 
 	sc
 end
-
