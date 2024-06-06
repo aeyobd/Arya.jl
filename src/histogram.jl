@@ -31,11 +31,11 @@ end
 
 
 """
-    calc_histogram(x[, bins]; weights, normalization, limits, closed)
+    histogram(x[, bins]; weights, normalization, limits, closed)
 
 Computes the histogram of a vector x with respect to the bins with optional weights. Returns the bin edges and the histogram.
 """
-function calc_histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
+function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
         weights=ones(Int64, length(x)), 
         normalization=:count,
         limits=nothing,
@@ -63,8 +63,8 @@ function calc_histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis;
         end
     end
 
-    h =  Histogram(bins=bins, weights=hist, normalization=normalization, closed=closed)
-    normalize!(h, normalization)
+    h =  Histogram(bins=bins, values=hist, normalization=normalization, closed=closed)
+    h = normalize(h, normalization)
 
     return h
 end
@@ -123,32 +123,32 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
 end
 
 
-function normalize!(hist::Histogram, normalization=:pdf)
+function normalize(hist::Histogram, normalization=:pdf)
     if normalization == :pdf
-        pdf = sum(hist.weights .* diff(hist.bins))
-        weights = hist.weights ./ pdf
+        pdf = sum(hist.values .* diff(hist.bins))
+        values = hist.values ./ pdf
     elseif normalization == :count
-        weights = hist.weights 
+        values = hist.values 
     else
         error("normalization must be either :pdf or :count")
     end
 
-    hist.weights .= weights
+    return Histogram(bins=hist.bins, values=values, normalization=normalization, closed=hist.closed)
 end
 
 
 function normalize!(hist::RollingHistogram, normalization=:pdf; dx=nothing)
 
     if normalization == :pdf
-        pdf = sum(hist.weights .* dx)
-        weights = hist.weights ./ pdf
+        pdf = sum(hist.values .* dx)
+        values = hist.values ./ pdf
     elseif normalization == :count
-        weights = hist.weights 
+        values = hist.values 
     else
         error("normalization must be either :pdf or :count")
     end
 
-    hist.weights .= weights
+    hist.values .= values
 end
 
 
@@ -159,6 +159,9 @@ as such bin_index is in 0 to length(bins)
 and either extrema represent a value outside the bins
 """
 function bin_index_left(bins, x)
+    if x == bins[end]
+        return length(bins) - 1
+    end
     idx = searchsortedlast(bins, x) 
     if (idx < 1) || (idx >= length(bins))
         idx = -1
@@ -174,6 +177,9 @@ as such bin_index is in 0 to length(bins)
 and either extrema represent a value outside the bins
 """
 function bin_index_right(bins, x)
+    if x == bins[1]
+        return 1
+    end
     idx = searchsortedfirst(bins, x) - 1 
     if (idx < 1) || (idx >= length(bins))
         idx = -1
@@ -210,6 +216,7 @@ function make_bins(x, limits, bins::AbstractVector)
     if length(unique(bins)) != length(bins)
         error("bins must be unique")
     end
+    return bins
 end
 
 

@@ -2,6 +2,7 @@
 
 import StatsBase as sb
 import NearestNeighbors as nn
+import StatsBase: quantile, percentile
 
 
 
@@ -41,21 +42,3 @@ function std(x::AbstractArray, w::AbstractArray)
     return sb.std(x, sb.weights(w))
 end
 
-
-"""
-    percentile(x, p)
-
-The percentile of a vector `x` at `p`.
-"""
-function percentile(x::AbstractArray, p::Real)
-    return quantile(x, p)
-end
-
-
-"""
-    quantile(x, p)
-
-"""
-function quantile(x::AbstractArray, p::Real)
-    return sb.quantile(x, p)
-end

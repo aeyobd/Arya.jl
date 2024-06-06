@@ -17,6 +17,7 @@ include("histogram.jl")
 include("kde.jl")
 include("errscatter.jl")
 include("bayesian_blocks.jl")
+include("knuth_hist.jl")
 
 include("themes.jl")
 
