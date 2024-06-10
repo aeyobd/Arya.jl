@@ -102,6 +102,7 @@ function bandwidth_knn(x::AbstractArray; k=5, η=3.0)
 end
 
 
-
-
-# multivariate methods
+function bandwidth_knn(x::AbstractVector, y::AbstractVector; k=5, η=3.0)
+    X = hcat(x, y)'
+    return bandwidth_knn(X, k=k, η=η)
+end

@@ -14,16 +14,18 @@ export hist2d, hist2d!
 include("interface.jl")
 include("limits.jl")
 include("bandwidth.jl")
+
 include("histogram.jl")
 include("histogram2d.jl")
-include("kde.jl")
 include("errscatter.jl")
 include("bayesian_blocks.jl")
 include("knuth_hist.jl")
 
-include("hist_plots.jl")
+include("kde.jl")
 
+include("hist_plots.jl")
 include("themes.jl")
+
 
 function value(a::Real)
     a

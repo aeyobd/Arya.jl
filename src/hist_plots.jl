@@ -51,6 +51,14 @@ function Makie.convert_arguments(P::Type{<:Heatmap}, h::Arya.Histogram2D)
 end
 
 
+function Makie.convert_arguments(P::Type{<:Heatmap}, h::Arya.KDE2D)
+    x = h.x
+    y = h.y
+    z = h.values
+
+    return (x, y, z)
+end
+
 @recipe(Hist2D) do scene
     Attributes(
         colorrange = theme(scene, :colorrange),

@@ -54,7 +54,7 @@ function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis;
 
     for i in eachindex(x)
         idx = bin_index(bins, x[i])
-        if idx != -1
+        if idx in keys(hist)
             hist[idx] += weights[i]
         end
     end
@@ -159,9 +159,6 @@ function bin_index_left(bins, x)
         return length(bins) - 1
     end
     idx = searchsortedlast(bins, x) 
-    if (idx < 1) || (idx >= length(bins))
-        idx = -1
-    end
 
     return idx
 end
@@ -177,9 +174,7 @@ function bin_index_right(bins, x)
         return 1
     end
     idx = searchsortedfirst(bins, x) - 1 
-    if (idx < 1) || (idx >= length(bins))
-        idx = -1
-    end
+
     return idx
 end
 

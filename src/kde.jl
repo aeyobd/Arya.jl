@@ -11,7 +11,7 @@ $(FIELDS)
 """
 @kwdef struct KDE
     """sample points for density"""
-    sample_points::Vector{F}
+    x::Vector{F}
 
     """the density"""
     values::Vector{F}
@@ -27,8 +27,23 @@ $(FIELDS)
 end
 
 
+
+@kwdef mutable struct KDE2D
+    x::Vector{F}
+    y::Vector{F}
+    values::Matrix{F}
+    kernel::Function
+    r_trunc::F = 3
+end
+
+
+
 function gaussian_kernel(x::Real)
     return 1/sqrt(2π) * exp(-x^2/2)
+end
+
+function kernel_2d_gaussian(x::Real, y::Real)
+    return 1/(2π) * exp(-0.5 * (x^2 + y^2))
 end
 
 
@@ -38,7 +53,7 @@ end
 
 
 
-function kde(x::AbstractArray, bandwidth; 
+function calc_kde(x::AbstractArray, bandwidth::AbstractArray; 
         weights=nothing, 
         kernel=gaussian_kernel, 
         r_trunc=3, 
@@ -51,45 +66,119 @@ function kde(x::AbstractArray, bandwidth;
 
     bins = make_bins(x, limits, n_samples)
 
-
     if weights == nothing
         weights = ones(length(x))
     end
 
     weights = weights / sum(weights)
 
-    if bandwidth isa Function
-        bandwidth = bandwidth(x)
-    end
-    if bandwidth isa Real
-        bandwidth = fill(bandwidth, length(x))
-    end
-
-
     N = length(x)
     hist = zeros(length(bins))
+    kde = KDE(bins, hist, bandwidth, kernel, r_trunc)
 
     for i in 1:N
-        # range of bins >= x[i] - bandwidth and <= x[i] + bandwidth
-        bw = bandwidth[i]
-
-        idx_l = searchsortedfirst(bins, x[i] - bw*r_trunc)
-        idx_h = searchsortedlast(bins, x[i] + bw*r_trunc)
-
-        if idx_l < 1
-            println("idx_l < 1")
-        elseif idx_h > length(bins)
-            println("idx_h > length(bins)")
-        end
-
-        # boundary truncation
-        idx_l = max(1, idx_l)
-        idx_h = min(length(bins), idx_h)
-
-        dens = kernel.((bins[idx_l:idx_h] .- x[i]) ./ bw) ./ bw
-
-        hist[idx_l:idx_h] .+= weights[i] .* dens
+        add_point!(kde, x[i], bandwidth[i], weights[i])
     end
 
-    return KDE(bins, hist, bandwidth, kernel, r_trunc)
+    return kde
+end
+
+
+function calc_kde(x, bandwidth::Function=bandwidth_knn; kwargs...)
+    return calc_kde(x, bandwidth(x), kwargs...)
+end
+
+function calc_kde(x, bandwidth::Real; kwargs...)
+    return calc_kde(x, fill(bandwidth, length(x)), kwargs...)
+end
+
+
+function add_point!(kde::KDE, x, bandwidth, weight)
+    dx = kde.r_trunc * bandwidth
+    idx_l = bin_index_safe(kde.x, x - dx)
+    idx_h = bin_index_safe(kde.x, x + dx)
+
+    dens = kde.kernel.((kde.x[idx_l:idx_h] .- x) ./ bandwidth) ./ bandwidth
+
+    kde.values[idx_l:idx_h] .+= weight .* dens
+end
+
+
+# Function to perform 2D KDE with truncated kernel
+function kde2d(x::Vector{Float64}, y::Vector{Float64}, bandwidth::AbstractVector; 
+        bins=100, r_trunc::Float64=5.0, limits=nothing,
+        weights=ones(length(x)), kernel=kernel_2d_gaussian
+    ) 
+
+    
+    # Define grid for evaluation
+    xlims, ylims = calc_limits(x, y, limits)
+    xgrid = make_bins(x, xlims, bins)
+    ygrid = make_bins(y, ylims, bins)
+
+    kde = KDE2D(x=xgrid, y=ygrid, 
+                values=zeros(Float64, length(xgrid), length(ygrid)),
+            kernel=kernel, r_trunc=r_trunc)
+
+    # 2D KDE computation by looping over data points
+    for k in 1:length(x)
+        add_point!(kde, x[k], y[k], bandwidth[k], weights[k])
+    end
+    
+    return kde
+end
+
+
+function kde2d(x, y, bandwidth::Function=bandwidth_knn; kwargs...)
+    return kde2d(x, y, bandwidth(x, y), kwargs...)
+end
+
+function kde2d(x, y, bandwidth::Real; kwargs...)
+    return kde2d(x, y, fill(bandwidth, length(x)), kwargs...)
+end
+
+
+function add_point!(kde::KDE2D, x::Real, y::Real, bandwidth::Tuple, weight::Real=1)
+    idx_x, idx_y = kde_grid_indices(kde, x, y, bandwidth)
+
+    for i in idx_x[1]:idx_x[2]
+        for j in idx_y[1]:idx_y[2]
+            zx = (x - kde.x[i]) / bandwidth[1]
+            zy = (y - kde.y[j]) / bandwidth[2]
+
+            kde.values[i, j] += weight * kde.kernel(zx, zy) / (bandwidth[1] * bandwidth[2])
+        end
+    end
+end
+
+function add_point!(kde::KDE2D, x::Real, y::Real, bandwidth::Real, weight::Real=1)
+    add_point!(kde, x, y, (bandwidth, bandwidth), weight)
+end
+
+
+function kde_grid_indices(kde::KDE2D, xi::Real, yj::Real, bandwidth::Tuple)
+    hx, hy = bandwidth
+
+    dx = kde.r_trunc * hx
+    dy = kde.r_trunc * hy
+    # Find the indices of the grid points that are within the truncation range
+    #
+    idx_x_min = bin_index_safe(kde.x, xi - dx)
+    idx_x_max = bin_index_safe(kde.x, xi + dx)
+    idx_y_min = bin_index_safe(kde.y, yj - dy)
+    idx_y_max = bin_index_safe(kde.y, yj + dy)
+
+    return (idx_x_min, idx_x_max), (idx_y_min, idx_y_max)
+end
+
+
+function bin_index_safe(bins::Array, x::Real)
+    idx = bin_index_left(bins, x)
+    if idx < 1
+        return 1
+    elseif idx > length(bins)
+        return length(bins)
+    else
+        return idx
+    end
 end
