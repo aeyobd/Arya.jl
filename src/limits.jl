@@ -1,7 +1,10 @@
 """
     calc_limits(x[, limits])
 
-Calculates the limits of x.
+Calculates the limits of x. If limits is a tuple, it should be a 2-tuple of
+lower and upper limits. If either limit is nothing, then the maximum/minimum of
+x is used instead of that limit. Raises an error if the lower limit is greater
+than the upper limit.
 """
 function calc_limits(x, limits::Tuple=(nothing, nothing))
     lower, upper = limits
@@ -17,6 +20,10 @@ function calc_limits(x, limits::Tuple=(nothing, nothing))
         upper = maximum(x)
     end
 
+    if lower > upper
+        error("Lower limit is greater than upper limit ($lower > $upper)")
+    end
+
     return lower, upper
 end
 
@@ -26,14 +33,17 @@ function calc_limits(x, limits::Nothing)
 end
 
 
+# 2D limits
 
 
 """
     calc_limits(x, y[, limits])
 
 Given both x and y data, calculates the limits of both x and y.
+Limits should be either a tuple of x limits and y limits, or a 4-tuple of xlow, xhigh, ylow, yhigh.
+See documentation for calc_limits(x, limits) for the details.
 """
-function calc_limits(x, y, limits::Tuple{T, T}) where T <: Union{Nothing, Tuple}
+function calc_limits(x, y, limits::Tuple{Any, Any})
     xlimits, ylimits = limits
     xlimits = calc_limits(x, xlimits)
     ylimits = calc_limits(y, ylimits)
@@ -46,7 +56,7 @@ end
 
 
 
-function calc_limits(x, y, limits::Tuple)
+function calc_limits(x, y, limits::Tuple{Any, Any, Any, Any})
     xlimits = limits[1:2]
     ylimits = limits[3:4]
     return calc_limits(x, y, (xlimits, ylimits))

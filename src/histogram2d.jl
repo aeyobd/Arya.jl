@@ -1,4 +1,8 @@
-
+@kwdef struct Histogram2D
+    xbins::AbstractVector
+    ybins::AbstractVector
+    values::AbstractMatrix
+end
 
 """
     histogram2d(x, y, bins; weights, limits)
@@ -23,8 +27,10 @@ limits : Tuple{Tuple{Real, Real}, Tuple{Real, Real}}
     If bins is an Int, then the limits of the data,
     otherwise ignored
 """
-function histogram2d(x, y, bins::Tuple{AbstractVector, AbstractVector}; weights=ones(Int64, length(x)), limits=nothing)
-
+function histogram2d(x, y, bins::Tuple{AbstractVector, AbstractVector}; weights=nothing, limits=nothing)
+    if weights == nothing
+        weights = ones(Int64, length(x))
+    end
     xedges, yedges = bins
     Nx = length(xedges) - 1
     Ny = length(yedges) - 1
@@ -40,7 +46,11 @@ function histogram2d(x, y, bins::Tuple{AbstractVector, AbstractVector}; weights=
         end
     end
 
-    return H, xedges, yedges
+    return Histogram2D(
+        xbins=xedges,
+        ybins=yedges,
+        values=H
+    )
 end
 
 
