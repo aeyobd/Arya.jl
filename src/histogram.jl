@@ -3,9 +3,10 @@ import Base: @kwdef
 midpoint(x) = (x[1:end-1] + x[2:end]) ./ 2
 
 
-@kwdef struct Histogram
+@kwdef mutable struct Histogram
     bins::AbstractVector
     values::AbstractVector
+    err::AbstractVector
 
     normalization::Symbol = :count
     closed::Symbol = :left
@@ -51,16 +52,20 @@ function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis;
 
     N = length(bins)
     hist = zeros(eltype(weights), N-1)
+    counts = zeros(Int, N-1)
 
     for i in eachindex(x)
         idx = bin_index(bins, x[i])
         if idx in keys(hist)
             hist[idx] += weights[i]
+            counts[idx] += 1
         end
     end
+    err = hist ./ sqrt.(counts)
 
-    h =  Histogram(bins=bins, values=hist, normalization=normalization, closed=closed)
-    h = normalize(h, normalization)
+    h = Histogram(bins=bins, values=hist, err=err,
+                   normalization=normalization, closed=closed)
+    normalize!(h, normalization)
 
     return h
 end
@@ -119,17 +124,15 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
 end
 
 
-function normalize(hist::Histogram, normalization=:pdf)
+function normalize!(hist::Histogram, normalization=:pdf)
     if normalization == :pdf
-        pdf = sum(hist.values .* diff(hist.bins))
-        values = hist.values ./ pdf
+        A = sum(hist.values .* diff(hist.bins))
+        hist.values ./= A
+        hist.err ./= A
     elseif normalization == :count
-        values = hist.values 
     else
         error("normalization must be either :pdf or :count")
     end
-
-    return Histogram(bins=hist.bins, values=values, normalization=normalization, closed=hist.closed)
 end
 
 
