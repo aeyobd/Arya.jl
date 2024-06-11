@@ -33,11 +33,15 @@ end
 Computes the histogram of a vector x with respect to the bins with optional weights. Returns the bin edges and the histogram.
 """
 function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
-        weights=ones(Int64, length(x)), 
+        weights=nothing,
         normalization=:count,
         limits=nothing,
         closed=:left,
     )
+
+    if weights==nothing
+        weights = ones(Int64, length(x))
+    end
 
     limits = calc_limits(x, limits)
     bins = make_bins(x, limits, bins)

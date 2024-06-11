@@ -1,6 +1,7 @@
 module Arya
 
-using Makie
+using MakieCore
+import MakieCore: @recipe
 using DocStringExtensions: TYPEDEF, FIELDS
 
 
