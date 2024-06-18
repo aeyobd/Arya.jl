@@ -62,7 +62,9 @@ function calc_kde(x::AbstractArray, bandwidth::AbstractArray;
     )
 
     # TODO: account for bandwidth here
-    limits = calc_limits(x, limits)
+    low = calc_limits(x .- bandwidth, limits)[1]
+    high = calc_limits(x .+ bandwidth, limits)[2]
+    limits = (low, high)
 
     bins = make_bins(x, limits, n_samples)
 
@@ -84,8 +86,23 @@ function calc_kde(x::AbstractArray, bandwidth::AbstractArray;
 end
 
 
-function calc_kde(x, bandwidth::Function=bandwidth_knn; kwargs...)
-    return calc_kde(x, bandwidth(x), kwargs...)
+function calc_kde(x, bandwidth::Function=bandwidth_knn;
+        weights=nothing,
+        kernel=gaussian_kernel,
+        r_trunc=3,
+        limits=nothing, 
+        n_samples=1000,
+        η=1,
+        kwargs...)
+
+    bandwidth = η * bandwidth(x; kwargs...)
+    return calc_kde(x, bandwidth,
+                    weights=weights, 
+                    kernel=kernel, 
+                    r_trunc=r_trunc, 
+                    limits=limits, 
+                    n_samples=n_samples, 
+                   )
 end
 
 function calc_kde(x, bandwidth::Real; kwargs...)
@@ -104,17 +121,29 @@ function add_point!(kde::KDE, x, bandwidth, weight)
 end
 
 
-# Function to perform 2D KDE with truncated kernel
+
+
+# =============================================================================
+# 2D KDE 
+# =============================================================================
+
+"""
+    kde2d
+"""
 function kde2d(x::Vector{Float64}, y::Vector{Float64}, bandwidth::AbstractVector; 
         bins=100, r_trunc::Float64=5.0, limits=nothing,
         weights=ones(length(x)), kernel=kernel_2d_gaussian
     ) 
 
     
-    # Define grid for evaluation
-    xlims, ylims = calc_limits(x, y, limits)
-    xgrid = make_bins(x, xlims, bins)
-    ygrid = make_bins(y, ylims, bins)
+    xlims, ylims = split_limits(limits)
+    xlims = calc_limits(x, xlims)
+    ylims = calc_limits(y, ylims)
+
+    xgrid = make_bins(x, xlims, bins-1)
+    ygrid = make_bins(y, ylims, bins-1)
+
+    weights = weights / sum(weights)
 
     kde = KDE2D(x=xgrid, y=ygrid, 
                 values=zeros(Float64, length(xgrid), length(ygrid)),

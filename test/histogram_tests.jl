@@ -9,14 +9,16 @@
     @test Arya.bin_index_left(bins, 0.5) == 5
 
     bins = [-1.2, -0.5, 0.0, 1e-5, 2.5]
+    N = length(bins)
 
-    @test Arya.bin_index_left(bins, -2.0) == -1
-    @test Arya.bin_index_left(bins, 10) == -1
-    @test Arya.bin_index_left(bins, NaN) == -1
-    @test Arya.bin_index_left(bins, 2.5) == -1
+    @test Arya.bin_index_left(bins, -2.0) == 0
+    @test Arya.bin_index_left(bins, 10) == N 
+    @test Arya.bin_index_left(bins, NaN) == N 
+    @test Arya.bin_index_left(bins, 2.5) == N - 1
     @test Arya.bin_index_left(bins, -1) == 1
     @test Arya.bin_index_left(bins, 1) == 4
 end
+
 
 @testset "bin index right" begin
 
@@ -29,9 +31,10 @@ end
 
     bins = [-1.2, -0.5, 0.0, 1e-5, 2.5]
 
-    @test Arya.bin_index_right(bins, -2.0) == -1
-    @test Arya.bin_index_right(bins, 10) == -1
-    @test Arya.bin_index_right(bins, NaN) == -1
+    N = length(bins)
+    @test Arya.bin_index_right(bins, -2.0) == 0
+    @test Arya.bin_index_right(bins, 10) == N
+    @test Arya.bin_index_right(bins, NaN) == N
     @test Arya.bin_index_right(bins, 2.5) == 4
     @test Arya.bin_index_right(bins, -1) == 1
     @test Arya.bin_index_right(bins, 1) == 4
@@ -64,7 +67,7 @@ end
 end
 
 
-@testset "make bins function" begin
+@testset "make bins function -> bandwidth" begin
     x = nothing
     limits = [0, 1]
     
@@ -82,9 +85,30 @@ end
 end
 
 
+@testset "make bins function -> bins" begin
+    x = nothing
+    limits = [0, 1]
+    
+    bw = 0.123
+    bins = [0, 0.1, 0.2, 0.4, 1]
+    f = x->bins
+    bins = Arya.make_bins(x, limits, f)
+    @test bins ≈ bins
+
+end
+
+
 @testset "make bins array" begin
     x = nothing
     limits = [0, 1]
     
     bw = 0.123
+end
+
+@testset "midpoint" begin
+    x = 1:5
+    @test Arya.midpoint(x) ≈ 1.5:1:4.5
+
+    x = [1, -2, 4]
+    @test Arya.midpoint(x) ≈ [-0.5, 1]
 end

@@ -6,16 +6,7 @@ using Measurements
 using Makie
 using Arya
 
-function Arya.value(a::Measurement) 
-    a.val
-end
-
-
-
-function Arya.err(a::Measurement)
-    a.err
-end
-
+import Measurements: value, uncertainty
 
 
 function Makie.convert_single_argument(y::Array{Measurement{T}}) where T

@@ -1,22 +1,29 @@
 import Base: @kwdef
 
-midpoint(x) = (x[1:end-1] + x[2:end]) ./ 2
+
+"""
+An abstract type for histograms. Should represent a density estimate
+sampled at points x with values values and errors err.
+"""
+abstract type AbstractHistogram end
 
 
-@kwdef mutable struct Histogram
-    bins::AbstractVector
-    values::AbstractVector
-    err::AbstractVector
+@kwdef mutable struct Histogram{S, T} <: AbstractHistogram
+    bins::AbstractVector{S}
+    # x
+    # binwidths
+    values::AbstractVector{T}
+    err::Union{AbstractVector{T}, Nothing} = nothing
 
     normalization::Symbol = :count
     closed::Symbol = :left
 end
 
-Base.iterate(h::Histogram) = (h.bins, h.values)
+
 
 
 @kwdef struct RollingHistogram
-    sample_points::AbstractVector
+    x::AbstractVector
     values::AbstractVector
 
     bandwidth
@@ -31,21 +38,88 @@ end
     histogram(x[, bins]; weights, normalization, limits, closed)
 
 Computes the histogram of a vector x with respect to the bins with optional weights. Returns the bin edges and the histogram.
+
+
+
+Parameters
+----------
+uncertanties
+    :poisson, :bootstrap, :none
 """
 function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
         weights=nothing,
         normalization=:count,
         limits=nothing,
         closed=:left,
+        errors=:poisson,
+        kwargs...
     )
 
-    if weights==nothing
-        weights = ones(Int64, length(x))
-    end
 
     limits = calc_limits(x, limits)
-    bins = make_bins(x, limits, bins)
+    bins = make_bins(x, limits, bins; kwargs...)
 
+
+    hist, low, high = simple_hist(x, bins, weights, closed=closed)
+
+    binvolumnes = diff(bins)
+    hist = normalize(binvolumnes, hist, normalization)
+
+    if errors == :poisson
+        err = poisson_errors(x, bins, hist)
+    else
+        err = nothing
+    end
+
+    h = Histogram(bins=bins, values=hist, err=err,
+                   normalization=normalization, closed=closed)
+
+    return h
+end
+
+
+function poisson_errors(data, bins, hist)
+    counts = simple_hist(data, bins, nothing)[1]
+    return hist ./ sqrt.(counts)
+end
+
+
+"""
+    simple_hist(x, bins[, weights]; closed=:left)
+
+Computes the histogram of a vector x with respect to the bins. Returns the histogram, and the counts for x below and above the histogram range
+"""
+function simple_hist(x, bins, weights; closed=:left)
+    N = length(bins)
+    hist = zeros(eltype(weights), N+1)
+
+    idx = bin_indices(x, bins, closed) .+ 1
+
+    for i in eachindex(x)
+        hist[idx[i]] += weights[i]
+    end
+
+    return hist[2:end-1], hist[1], hist[end]
+end
+
+
+
+function simple_hist(x, bins, weights::Nothing=nothing; closed=:left)
+    N = length(bins)
+    idxs = bin_indices(x, bins, closed) .+ 1
+
+    hist = zeros(Int, length(bins)+1)
+
+    for i in idxs
+        hist[i] += 1
+    end
+    
+    return hist[2:end-1], hist[1], hist[end]
+end
+
+
+
+function bin_indices(x, bins, closed=:left)
     if closed == :left
         bin_index = bin_index_left
     elseif closed == :right
@@ -54,26 +128,24 @@ function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis;
         error("closed must be either :left or :right")
     end
 
-    N = length(bins)
-    hist = zeros(eltype(weights), N-1)
-    counts = zeros(Int, N-1)
-
-    for i in eachindex(x)
-        idx = bin_index(bins, x[i])
-        if idx in keys(hist)
-            hist[idx] += weights[i]
-            counts[idx] += 1
-        end
-    end
-    err = hist ./ sqrt.(counts)
-
-    h = Histogram(bins=bins, values=hist, err=err,
-                   normalization=normalization, closed=closed)
-    normalize!(h, normalization)
-
-    return h
+    return [bin_index(bins, x[i]) for i in eachindex(x)]
 end
 
+
+
+"""
+not implemented fully
+"""
+function bootstrap_hist(x, bins, weights; N=1000)
+    bins = make_bins(x, limits, bins)
+
+
+    for _ in 1:N
+        idx = rand(1:length(x), length(x))
+        h = simple_hist(x[idx], bins, weights=weights[idx])
+        hist += h.values
+    end
+end
 
 
 """
@@ -87,6 +159,7 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
         normalization=:pdf, 
         limits=nothing, 
         samples=10000,
+        kwargs...
     )
 
     if bandwidth isa Function
@@ -96,7 +169,7 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
 
     limits = (limits[1] - bandwidth, limits[2] + bandwidth)
 
-    bins = make_bins(x, limits, samples-1)
+    bins = make_bins(x, limits, samples-1; kwargs...)
 
     hist = zeros(length(bins))
 
@@ -120,38 +193,40 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
 
         hist[idx_l:idx_h] .+= weights[i] / width
     end
+    hist = normalize(gradient(bins), hist, normalization)
 
     h =  RollingHistogram(x=bins, values=hist, bandwidth=bandwidth, normalization=normalization)
-    normalize!(h, normalization; dx=bins[2] - bins[1])
 
     return h
 end
 
 
-function normalize!(hist::Histogram, normalization=:pdf)
+"""
+Normalizes the values of a histogram.
+- :pdf normalizes the histogram to a probability density function
+- :count (unnormalized)
+- :density normalizes the histogram to the bin width
+"""
+function normalize(binvolumnes::AbstractVector, hist::AbstractVector, normalization=:pdf)
+    if length(binvolumnes) != length(hist) 
+        error("length of bins must be length of hist + 1")
+    end
+
     if normalization == :pdf
-        A = sum(hist.values .* diff(hist.bins))
-        hist.values ./= A
-        hist.err ./= A
-    elseif normalization == :count
+        A = sum(hist) .* binvolumnes
+    elseif normalization == :count || normalization == :none
+        A = 1
+    elseif normalization == :density
+        A = binvolumnes
+    elseif normalization == :probabilitymass
+        A = sum(hist)
     else
         error("normalization must be either :pdf or :count")
     end
-end
 
+    hist_norm = hist ./ A
 
-function normalize!(hist::RollingHistogram, normalization=:pdf; dx=nothing)
-
-    if normalization == :pdf
-        pdf = sum(hist.values .* dx)
-        values = hist.values ./ pdf
-    elseif normalization == :count
-        values = hist.values 
-    else
-        error("normalization must be either :pdf or :count")
-    end
-
-    hist.values .= values
+    return hist_norm
 end
 
 
@@ -199,6 +274,7 @@ function make_bins(x, limits, bins::Nothing=nothing; bandwidth=nothing)
 end
 
 
+
 function make_bins(x, limits, bins::Int)
     bins = LinRange(limits[1], limits[2], bins+1)
 
@@ -218,8 +294,8 @@ function make_bins(x, limits, bins::AbstractVector)
 end
 
 
-function make_bins(x, limits, bins::Function)
-    h = bins(x)
+function make_bins(x, limits, bins::Function; kwargs...)
+    h = bins(x; kwargs...)
     if h isa Real
         return make_bins(x, limits, bandwidth=h)
     elseif h isa AbstractVector
@@ -234,7 +310,7 @@ end
 """
 calculates equal number bins over the array x with n values per bin.
 """
-function make_equal_number_bins(x, n)
+function bins_equal_number(x; n=10)
     return [percentile(x, i) for i in LinRange(0, 100, n+1)]
 end
 

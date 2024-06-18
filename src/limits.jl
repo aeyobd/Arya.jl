@@ -1,3 +1,5 @@
+
+
 """
     calc_limits(x[, limits])
 
@@ -5,18 +7,32 @@ Calculates the limits of x. If limits is a tuple, it should be a 2-tuple of
 lower and upper limits. If either limit is nothing, then the maximum/minimum of
 x is used instead of that limit. Raises an error if the lower limit is greater
 than the upper limit.
+
+Parameters
+----------
+
+filt_nan : Bool
+    If true, filters out NaN values. Applies to limits as well
+filt_inf : Bool
+    If true, filters out infinite values. Applies to limits as well
+
+
 """
-function calc_limits(x, limits::Tuple=(nothing, nothing))
+function calc_limits(x, limits::Tuple=(nothing, nothing);
+        filt_nan::Bool=true, filt_inf::Bool=false)
+
     lower, upper = limits
 
-    filt = isfinite.(x)
-    x = x[filt]
+    included = _create_filter(filt_nan, filt_inf)
 
-    if lower == nothing
+    x = filter(included, x)
+
+
+    if !included(lower)
         lower = minimum(x)
     end
 
-    if upper == nothing
+    if !included(upper)
         upper = maximum(x)
     end
 
@@ -28,38 +44,62 @@ function calc_limits(x, limits::Tuple=(nothing, nothing))
 end
 
 
-function calc_limits(x, limits::Nothing)
-    return calc_limits(x, (nothing, nothing))
+function calc_limits(x, limits::Nothing; kwargs...)
+    return calc_limits(x, (nothing, nothing); kwargs...)
 end
+
+
+
 
 
 # 2D limits
 
+"""
+    split_limits(limits)
+
+Returns a 2-2-tuple or 4-tuple xy limits as a tuple of 2-tuples.
+"""
+function split_limits(limits::Tuple{Any, Any, Any, Any})
+    return (limits[1:2], limits[3:4])
+end
+
+
+function split_limits(limits::Tuple{Any, Any})
+    return limits
+end
+
+
+function split_limits(limits::Nothing)
+    return nothing, nothing
+end
+
+
+
 
 """
-    calc_limits(x, y[, limits])
-
-Given both x and y data, calculates the limits of both x and y.
-Limits should be either a tuple of x limits and y limits, or a 4-tuple of xlow, xhigh, ylow, yhigh.
-See documentation for calc_limits(x, limits) for the details.
+creates a filter for calc_limits.
 """
-function calc_limits(x, y, limits::Tuple{Any, Any})
-    xlimits, ylimits = limits
-    xlimits = calc_limits(x, xlimits)
-    ylimits = calc_limits(y, ylimits)
-    return xlimits, ylimits
+function _create_filter(filt_nan::Bool, filt_inf::Bool)
+    filters = Any[
+        x->!isnothing(x)
+    ]
+
+    if filt_nan
+        push!(filters, x->!isnan(x))
+    end
+    if filt_inf
+        push!(filters, x->!isinf(x))
+    end
+
+    function f_filt(x)
+        for f in filters
+            if !f(x)
+                return false
+            end
+        end
+        return true
+    end
+
+    return f_filt
 end
-
-function calc_limits(x, y, limits::Nothing=nothing)
-    return calc_limits(x, y, (nothing, nothing))
-end
-
-
-
-function calc_limits(x, y, limits::Tuple{Any, Any, Any, Any})
-    xlimits = limits[1:2]
-    ylimits = limits[3:4]
-    return calc_limits(x, y, (xlimits, ylimits))
-end
-
 

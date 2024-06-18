@@ -85,7 +85,7 @@ end
 # Adaptive 1D methods for kde
 
 @doc raw"""
-    bandwidth_knn(x; k=5, η=3.0)
+    bandwidth_knn(x; k=5, η=1)
 
 The bandwidth selection rule based on the k-nearest neighbors.
 
@@ -95,14 +95,14 @@ h = \eta \frac{d_{k+1}}{\sqrt{k}}
 
 where `d_{k+1}` is the distance to the k+1 nearest neighbor, `k` is the number of neighbors, and `η` is a scaling factor.
 """
-function bandwidth_knn(x::AbstractArray; k=5, η=3.0)
+function bandwidth_knn(x::AbstractArray; k=5, η=1.0)
     _, dists = knn(x, k=k)
     h = @. η * dists / sqrt(k)
     return h
 end
 
 
-function bandwidth_knn(x::AbstractVector, y::AbstractVector; k=5, η=3.0)
+function bandwidth_knn(x::AbstractVector, y::AbstractVector; k=5, η=1.0)
     X = hcat(x, y)'
     return bandwidth_knn(X, k=k, η=η)
 end

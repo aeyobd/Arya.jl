@@ -58,7 +58,9 @@ function histogram2d(x, y, bins::Tuple{Int, Int}; limits=nothing, kwargs...)
     x1 = x[isfinite.(x)]
     y1 = y[isfinite.(y)]
 
-    (xmin, xmax), (ymin, ymax) = calc_limits(x, y, limits)
+    xlims, ylims = split_limits(limits)
+    xmin, xmax = calc_limits(x1, xlims)
+    ymin, ymax = calc_limits(y1, ylims)
 
     xedges = range(xmin, stop=xmax, length=bins[1]+1)
     yedges = range(ymin, stop=ymax, length=bins[2]+1)
