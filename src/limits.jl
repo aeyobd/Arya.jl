@@ -49,6 +49,13 @@ function calc_limits(x, limits::Nothing; kwargs...)
 end
 
 
+function calc_limits_2d(x, y, limits; kwargs...)
+    xlimits, ylimits = split_limits(limits)
+    xlimits = calc_limits(x, xlimits; kwargs...)
+    ylimits = calc_limits(y, ylimits; kwargs...)
+    return xlimits, ylimits
+end
+
 
 
 

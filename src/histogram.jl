@@ -62,8 +62,7 @@ function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis;
 
     hist, low, high = simple_hist(x, bins, weights, closed=closed)
 
-    binvolumnes = diff(bins)
-    hist = normalize(binvolumnes, hist, normalization)
+    hist = normalize(hist, bin_volumes(bins), normalization)
 
     if errors == :poisson
         err = poisson_errors(x, bins, hist)
@@ -193,11 +192,16 @@ function rolling_histogram(x::AbstractVector, bandwidth=bandwidth_freedman_diaco
 
         hist[idx_l:idx_h] .+= weights[i] / width
     end
-    hist = normalize(gradient(bins), hist, normalization)
+    hist = normalize(hist, gradient(bins), normalization)
 
     h =  RollingHistogram(x=bins, values=hist, bandwidth=bandwidth, normalization=normalization)
 
     return h
+end
+
+
+function bin_volumes(bins::AbstractVector)
+    return diff(bins)
 end
 
 
@@ -207,21 +211,21 @@ Normalizes the values of a histogram.
 - :count (unnormalized)
 - :density normalizes the histogram to the bin width
 """
-function normalize(binvolumnes::AbstractVector, hist::AbstractVector, normalization=:pdf)
-    if length(binvolumnes) != length(hist) 
+function normalize(hist::AbstractArray, volumnes::AbstractArray, normalization=:pdf)
+    if size(volumnes) != size(hist) 
         error("length of bins must be length of hist + 1")
     end
 
     if normalization == :pdf
-        A = sum(hist) .* binvolumnes
-    elseif normalization == :count || normalization == :none
+        A = sum(hist) .* volumnes
+    elseif normalization == :none
         A = 1
     elseif normalization == :density
-        A = binvolumnes
+        A = volumnes
     elseif normalization == :probabilitymass
         A = sum(hist)
     else
-        error("normalization must be either :pdf or :count")
+        error("Normalization must be either :pdf, :count, :density or :probabilitymass")
     end
 
     hist_norm = hist ./ A
