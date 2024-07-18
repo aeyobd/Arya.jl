@@ -1,4 +1,6 @@
-const pt_to_in = 1/72
+import TOML
+import Colors: color
+import ColorSchemeTools: make_colorscheme
 
 COLORS = Makie.wong_colors()
 
@@ -7,7 +9,7 @@ function theme_arya()
         fontsize=20,
         px_per_unit=5, # controls resolution for rasterization
         pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 72*px_per_unit pixels
-        colormap=:magma,
+        colormap=get_arya_cmap(),
         fonts = (;
             regular = Makie.texfont(:regular),
             bold = Makie.texfont(:bold),
@@ -73,3 +75,12 @@ function make_font_settings(;fontsize=12, typeface="Helvetica")
         :tickfontsize=>small,
     )
 end
+
+
+function get_arya_cmap()
+    cmap_file = joinpath(@__DIR__, "cmap_arya.toml")
+    color_list = color.(TOML.parsefile(cmap_file)["cmap_arya"])
+    cmap = make_colorscheme(color_list, length(color_list))
+    return cmap
+end
+
