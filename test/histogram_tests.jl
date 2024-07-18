@@ -105,10 +105,10 @@ end
     bw = 0.123
 end
 
-@testset "midpoint" begin
+@testset "midpoints" begin
     x = 1:5
-    @test Arya.midpoint(x) ≈ 1.5:1:4.5
+    @test Arya.midpoints(x) ≈ 1.5:1:4.5
 
     x = [1, -2, 4]
-    @test Arya.midpoint(x) ≈ [-0.5, 1]
+    @test Arya.midpoints(x) ≈ [-0.5, 1]
 end

@@ -9,7 +9,6 @@ function p0_prior(N::Int; p0=0.05)
     return 4 - log(73.53 * p0 * (N^-0.478))
 end
 
-midpoint(t::AbstractVector) = 0.5 * (t[1:end-1] + t[2:end])
 
 
 """
@@ -22,7 +21,7 @@ function bayesian_blocks(t::Vector{Float64}, x=nothing, fitness::Function=events
         prior=p0_prior
     )
     t, x = _validate_input(t, x)
-    edges = vcat(t[1], midpoint(t), t[end])
+    edges = vcat(t[1], midpoints(t), t[end])
 
 
     N = length(t)

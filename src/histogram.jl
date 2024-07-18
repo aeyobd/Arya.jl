@@ -48,7 +48,7 @@ uncertanties
 """
 function histogram(x::AbstractVector, bins=bandwidth_freedman_diaconis; 
         weights=nothing,
-        normalization=:count,
+        normalization=:none,
         limits=nothing,
         closed=:left,
         errors=:poisson,
@@ -225,7 +225,7 @@ function normalize(hist::AbstractArray, volumnes::AbstractArray, normalization=:
     elseif normalization == :probabilitymass
         A = sum(hist)
     else
-        error("Normalization must be either :pdf, :count, :density or :probabilitymass")
+        error("Normalization must be either :none, :pdf, :density or :probabilitymass")
     end
 
     hist_norm = hist ./ A

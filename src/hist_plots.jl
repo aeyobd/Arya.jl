@@ -5,16 +5,16 @@ using Makie
 
 
 function convert_arguments(P::Type{<:BarPlot}, h::Arya.Histogram)
-    xy = convert_arguments(P, Arya.midpoint(h.bins), h.values)
+    xy = convert_arguments(P, midpoints(h.bins), h.values)
     return PlotSpec(P, xy...; width = diff(h.bins), gap=0, dodge_gap=0)
 end
 
 function convert_arguments(p::Type{<:Scatter}, h::Arya.Histogram)
-	return (Arya.midpoint(h.bins), h.values)
+	return (midpoints(h.bins), h.values)
 end
 
 function convert_arguments(p::Type{<:Lines}, h::Arya.Histogram)
-	return (Arya.midpoint(h.bins), h.values)
+	return (midpoints(h.bins), h.values)
 end
 
 

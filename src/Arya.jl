@@ -26,6 +26,7 @@ include("bayesian_blocks.jl")
 include("knuth_hist.jl")
 
 include("kde.jl")
+include("kde2d.jl")
 
 include("hist_plots.jl")
 include("themes.jl")

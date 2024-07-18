@@ -1,6 +1,15 @@
+#
 # A collection of rules to determine
 # bandwidth for KDE and histograms
+import StatsBase as sb
 
+
+
+function effective_sample_size(w::AbstractVector)
+    n = length(w)
+    ess = sum(w)^2 / sum(w.^2)
+    return ess
+end
 
 
 function bandwidth_freedman_diaconis(x::AbstractVector)
@@ -80,6 +89,54 @@ function number_per_bin(x::AbstractVector)
     return 2n^(2/5)
 end
 
+
+
+@doc raw"""
+    bins_min_width_equal_number(x; dx_min, N_per_bin_min)
+
+Calculates bins for observations `x` ensuring each bin has at least 
+`N_per_bin_min` observations and the width of each bin is at least `dx_min`.
+"""
+function bins_min_width_equal_number(a::AbstractVector{<:Real}; dx_min::Real, N_per_bin_min::Integer)
+	if dx_min <= 0 && N_per_bin_min < 1
+		throw(ArgumentError("either dx_min or N must be positive"))
+	end
+
+    if length(a) == 0
+        return []
+    end
+
+	dq = N_per_bin_min / length(a)
+
+	bins = []
+	x = minimum(a)
+	push!(bins, x)
+
+	dx = 0
+
+	while x + dx < maximum(a)
+		q = sb.quantilerank(a, x)
+		if q + dq > 1
+			break
+		end
+		
+		dx = sb.quantile(a, q + dq) - x
+		dx = max(dx, dx_min)
+
+		x += dx
+
+		push!(bins, x)
+	end
+
+    if sum(a .> bins[end]) < N_per_bin_min
+        pop!(bins)
+    end
+
+	push!(bins, maximum(a))
+
+	return bins
+	
+end
 
 
 # Adaptive 1D methods for kde

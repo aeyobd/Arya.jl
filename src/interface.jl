@@ -1,6 +1,5 @@
 # code to interface with varius external packages
 
-import StatsBase as sb
 import NearestNeighbors as nn
 import StatsBase: quantile, percentile
 
@@ -25,20 +24,4 @@ function knn(x::AbstractArray; k=5, metric=:euclidean)
     return idxs, dists
 end
 
-
-function mean(x::AbstractArray; dims=:)
-    return sb.mean(x, dims=dims)
-end
-
-function mean(x::AbstractArray, w::AbstractArray; dims=:)
-    return sb.mean(x, sb.weights(w), dims=dims)
-end
-
-function std(x::AbstractArray; dims=:)
-    return sb.std(x, dims=dims)
-end
-
-function std(x::AbstractArray, w::AbstractArray)
-    return sb.std(x, sb.weights(w))
-end
 
