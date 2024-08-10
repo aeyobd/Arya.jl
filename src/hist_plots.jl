@@ -2,23 +2,24 @@ import MakieCore: convert_arguments, plot!
 import Makie: needs_tight_limits
 using Makie
 
+import DensityEstimators
 
 
-function convert_arguments(P::Type{<:BarPlot}, h::Arya.Histogram)
+function convert_arguments(P::Type{<:BarPlot}, h::DensityEstimators.Histogram)
     xy = convert_arguments(P, midpoints(h.bins), h.values)
     return PlotSpec(P, xy...; width = diff(h.bins), gap=0, dodge_gap=0)
 end
 
-function convert_arguments(p::Type{<:Scatter}, h::Arya.Histogram)
+function convert_arguments(p::Type{<:Scatter}, h::DensityEstimators.Histogram)
 	return (midpoints(h.bins), h.values)
 end
 
-function convert_arguments(p::Type{<:Lines}, h::Arya.Histogram)
+function convert_arguments(p::Type{<:Lines}, h::DensityEstimators.Histogram)
 	return (midpoints(h.bins), h.values)
 end
 
 
-function convert_arguments(P::Type{<:Heatmap}, h::Arya.Histogram2D)
+function convert_arguments(P::Type{<:Heatmap}, h::DensityEstimators.Histogram2D)
     x = h.xbins
     y = h.ybins
     z = h.values
@@ -27,7 +28,7 @@ function convert_arguments(P::Type{<:Heatmap}, h::Arya.Histogram2D)
 end
 
 
-function convert_arguments(P::Type{<:Heatmap}, h::Arya.KDE2D)
+function convert_arguments(P::Type{<:Heatmap}, h::DensityEstimators.KDE2D)
     x = h.x
     y = h.y
     z = h.values

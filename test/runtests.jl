@@ -2,9 +2,7 @@
 include("setup.jl")
 
 
-tests = ["limits", "bandwidth", "histogram", "interface", "bayesian_blocks", "histogram2d",
-         "kde2d",
-        ]
+tests = []
 
 for test in tests
     @testset "$test" begin

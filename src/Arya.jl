@@ -5,6 +5,8 @@ import MakieCore: @recipe
 using DocStringExtensions: TYPEDEF, FIELDS
 import StatsBase: midpoints
 
+using DensityEstimators
+
 
 export theme_arya
 export COLORS, FigAxis
@@ -15,19 +17,7 @@ export midpoints # from statsbase
 
 
 
-include("interface.jl")
-include("limits.jl")
-include("bandwidth.jl")
-
-include("histogram.jl")
-include("histogram2d.jl")
 include("errscatter.jl")
-include("bayesian_blocks.jl")
-include("knuth_hist.jl")
-
-include("kde.jl")
-include("kde2d.jl")
-
 include("hist_plots.jl")
 include("themes.jl")
 

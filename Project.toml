@@ -1,17 +1,15 @@
 name = "Arya"
 uuid = "415bc928-4679-4905-9aff-233f9524af88"
 authors = ["Daniel Boyea <aeyobd@gmail.com>"]
-version = "0.1.6"
+version = "0.1.8"
 
 [deps]
 ColorSchemeTools = "d3e213a1-5e82-5c18-bb32-2a58a99f8c46"
 Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
+DensityEstimators = "6a64a12f-920b-4cea-9d97-f6c2170ce0ee"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
-QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
