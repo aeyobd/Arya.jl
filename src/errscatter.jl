@@ -47,9 +47,6 @@ function Makie.plot!(p::ErrScatter)
 	x = p[1]
 	y = p[2]
 
-
-
-
     real_erroralpha = Observable{Any}()
     map!(real_erroralpha, p.alpha, p.erroralpha) do alpha, ealpha
         ealpha === automatic ? alpha : ealpha

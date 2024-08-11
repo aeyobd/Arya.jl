@@ -3,6 +3,7 @@ import Makie: needs_tight_limits
 using Makie
 
 import DensityEstimators
+import DensityEstimators: histogram2d
 
 
 function convert_arguments(P::Type{<:BarPlot}, h::DensityEstimators.Histogram)
@@ -62,7 +63,7 @@ function plot!(sc::Hist2D{<:Tuple{AbstractVector{<:Real}, AbstractVector{<:Real}
        )
 
 
-    colorrange = calc_limits(h.values, sc.colorrange.val)
+    colorrange = DensityEstimators.calc_limits(h.values, sc.colorrange.val)
     println("using colorrange: ", colorrange)
 
     #println("using limits: ", sc.limits.val)

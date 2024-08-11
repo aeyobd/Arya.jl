@@ -2,7 +2,7 @@
 include("setup.jl")
 
 
-tests = []
+tests = ["hist_plots", "errscatter"]
 
 for test in tests
     @testset "$test" begin
