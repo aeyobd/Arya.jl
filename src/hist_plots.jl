@@ -79,5 +79,3 @@ end
 # removes whitespace in axis like Heatmap
 Makie.needs_tight_limits(::Hist2D) = true
 
-
-

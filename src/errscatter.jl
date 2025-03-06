@@ -1,15 +1,19 @@
 import Makie: automatic
+import Colors
 import Makie
 import MakieCore
 
 """
-    errscatter(xs, ys; xerr, yerr, kwargs...)
+    errscatter(xs, ys; xerror, yerror, kwargs...)
 
 Plots a scatter plot with error bars.
+Note `alpha` attribute is broken in errorbars. 
 """
-@recipe ErrScatter begin
-    xerr = nothing
-    yerr = nothing
+@recipe ErrorScatter begin
+    "The x errors of the data"
+    xerror = nothing
+    "The y errors of the data"
+    yerror = nothing
 
     "The color of the markers and errorbars"
     color = @inherit markercolor
@@ -43,9 +47,9 @@ Plots a scatter plot with error bars.
 end
 
 
-function Makie.plot!(p::ErrScatter)
-	x = p[1]
-	y = p[2]
+function Makie.plot!(p::ErrorScatter)
+    x = p[1]
+    y = p[2]
 
     real_erroralpha = Observable{Any}()
     map!(real_erroralpha, p.alpha, p.erroralpha) do alpha, ealpha
@@ -55,11 +59,13 @@ function Makie.plot!(p::ErrScatter)
     real_errorcolor  = Observable{Any}()
     map!(real_errorcolor, p.color, p.errorcolor) do col, ecol
         if ecol === automatic
-            return (to_color(col), real_erroralpha[])
+            return to_color(col)
         else
-            return (to_color(ecol), real_erroralpha[])
+            return to_color(ecol)
         end
     end
+
+    # real_errorcolor[] = (real_errorcolor.val, real_alpha[])
 
     real_errorcolormap = Observable{Any}()
     map!(real_errorcolormap, p.colormap, p.errorcolormap) do cmap, ecmap
@@ -77,18 +83,28 @@ function Makie.plot!(p::ErrScatter)
         :color => real_errorcolor,
         :colormap => real_errorcolormap,
         :colorrange => real_errorcolorrange,
+        :alpha => real_erroralpha,
         :inspectable => p.inspectable,
     )
 
-    if p.xerr.val !== nothing
-        errorbars!(p, x, y, p.xerr, direction=:x; errorbar_kwargs...)
+
+    for key in keys(errorbar_kwargs)
+        s = string(errorbar_kwargs[key])
+        if length(s) > 159
+            s = s[1:150] * "..."
+        end
+        println(key, " ", s)
     end
 
-    if p.yerr.val !== nothing
-        errorbars!(p, x, y, p.yerr, direction=:y; errorbar_kwargs...)
+    if p.xerror.val !== nothing
+        errorbars!(p, x, y, p.xerror, direction=:x; errorbar_kwargs...)
     end
 
-	scatter!(p, x, y, 
+    if p.yerror.val !== nothing
+        errorbars!(p, x, y, p.yerror, direction=:y; errorbar_kwargs...)
+    end
+
+    scatter!(p, x, y, 
         color = p.color, 
         strokecolor = p.strokecolor,
         strokewidth = p.strokewidth,
@@ -102,5 +118,5 @@ function Makie.plot!(p::ErrScatter)
     )
 
 
-	p
+    return p
 end
