@@ -15,7 +15,7 @@ const DefaultLinearTicks = WilkinsonTicks(5,
 )
 
 
-function theme_arya(width=3.25)
+function theme_arya(; width=3.25, fontsize=12)
     arya = Theme(
         px_per_unit=5, # controls resolution for rasterization
         pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 72*px_per_unit pixels
@@ -27,6 +27,7 @@ function theme_arya(width=3.25)
             italic =  Makie.texfont(:italic),
             bold_italic =  Makie.texfont(:bolditalic),
             ),
+        fontsize = fontsize,
         Axis = (; 
             xticks = DefaultLinearTicks,
             yticks = DefaultLinearTicks,
@@ -50,7 +51,7 @@ function theme_arya(width=3.25)
             yminortickalign = 1,
             xgridvisible = false,
             ygridvisible = false,
-            make_font_settings(fontsize=12)...
+            make_font_settings(fontsize=fontsize)...
         ),
 
         CairoMakie = (; px_per_unit=5, type="png"),
@@ -90,7 +91,7 @@ Update the current theme with the given fontsize (in points).
 function update_fontsize!(fontsize::Real)
     smallfontsize = round(Int, 0.8*fontsize)
     largefontsize = round(Int, 1.2*fontsize)
-    update_theme!(; make_font_settings(fontsize=fontsize)...)
+    update_theme!(; fontsize=fontsize, Axis = (;make_font_settings(fontsize=fontsize)...))
 end
 
 function make_font_settings(;fontsize=12)
@@ -99,17 +100,12 @@ function make_font_settings(;fontsize=12)
     medium = fontsize
 
     return Dict(
-        :plot_titlefontsize=>large,
-        :titlefontsize=>large,
-        :annotationfontsize=>small,
-
-        :colorbar_tickfontsize=>small,
-        :colorbar_titlefontsize=>medium,
-        :legend_font_pointsize=>small,
-        :legend_title_font_pointsize=>medium,
-
-        :guidefontsize=>medium,
-        :tickfontsize=>small,
+        :titlesize=>large,
+        :subtitlesize=>large,
+        :xlabelsize=>medium,
+        :ylabelsize=>medium,
+        :xticklabelsize=>small,
+        :yticklabelsize=>small,
     )
 end
 
