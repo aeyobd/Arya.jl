@@ -3,7 +3,10 @@ import Colors: Colorant
 import ColorSchemeTools: make_colorscheme
 
 
+"A type allowing for minor ticks to be automatically generated in a sensable way"
 struct SmartMinorTicks end
+
+struct SmartMajorTicks end
 
 const UNITS_PER_INCH = 72
 const HW_RATIO = 3/4
@@ -16,10 +19,28 @@ const DefaultLinearTicks = WilkinsonTicks(5,
 )
 
 
-function theme_arya(; width=3.25, fontsize=12)
+function theme_arya(; width=3.25, fontsize=12, px_per_unit=4)
+    # for a 12pt font size in the times font,
+    # the em dash is 12 pt long and 0.6 pt high
+    # the recommended minimum element size is 0.3 pt. 
+    # So we can make major ticks 0.6 pt and minor 0.3 pt
+    # but I default to make the minor tick labels in 10 pt font
+    # Thus, we can use double width and single width elements for tick labels
+    # and lengths of 
+
+    smallfontsize = round(Int, 0.8*fontsize)
+    
+    x = smallfontsize / 12
+    lw = x 
+    slw = x/2
+    padding = 4x
+
     arya = Theme(
-        px_per_unit=5, # controls resolution for rasterization
-        pt_per_unit=1, # 1 unit = 1 pt, so 1 inch = 72 units = 72*px_per_unit pixels
+        px_per_unit=px_per_unit, # controls resolution for rasterization
+        pt_per_unit=1, # units are points so 72 units / inch.
+        figure_padding=2padding,
+        linewidth = lw,
+        markersize = 3lw,
         size = figsize_from_inches(width),
         colormap=get_arya_cmap(),
         fonts = (;
@@ -32,18 +53,18 @@ function theme_arya(; width=3.25, fontsize=12)
         Axis = (; 
             xticks = DefaultLinearTicks,
             yticks = DefaultLinearTicks,
-            xtickwidth = 1,
-            ytickwidth = 1,
-            xticklength = 10/3,
-            yticklength = 10/3,
+            xtickwidth = lw,
+            ytickwidth = lw,
+            xticklength = 3x,
+            yticklength = 3x,
             xminorticksvisible = true,
             yminorticksvisible = true,
             xminorticks = SmartMinorTicks(),
             yminorticks = SmartMinorTicks(),
-            xminortickwidth = 0.5,
-            yminortickwidth = 0.5,
-            xminorticklength = 5/3,
-            yminorticklength = 5/3,
+            xminortickwidth = slw,
+            yminortickwidth = slw,
+            xminorticklength = 1.5x,
+            yminorticklength = 1.5x,
             xticksmirrored = true,
             yticksmirrored = true,
             xtickalign = 1,
@@ -52,14 +73,31 @@ function theme_arya(; width=3.25, fontsize=12)
             yminortickalign = 1,
             xgridvisible = false,
             ygridvisible = false,
-            make_font_settings(fontsize=fontsize)...
+            spinewidth = lw,
         ),
-
-        CairoMakie = (; px_per_unit=5, type="svg"),
-        GLMakie = (; px_per_unit=5)
+        Colorbar = (;
+            ticks = DefaultLinearTicks,
+            tickwidth = lw,
+            ticksize = 3x,
+            minorticksvisible = true,
+            minorticks = SmartMinorTicks(),
+            minortickwidth = slw,
+            minorticklength = 1.5x,
+            spinewidth = lw,
+        ),
+        Legend = (;
+            padding = (2x, 2x, 2x, 2x),
+            colgap = 2x,
+            patchsize = (5x, 5x),
+            patchstrokewidth = lw,
+            framewidth = lw,
+        ),
+        CairoMakie = (; px_per_unit=px_per_unit, type="svg"),
+        GLMakie = (; px_per_unit=px_per_unit)
 
     )
 
+    update_theme!(arya; make_font_settings(fontsize=fontsize)...)
     return arya
 end
 
@@ -80,7 +118,7 @@ end
 Update the current theme with the given width and height in inches.
 """
 function update_figsize!(width::Real, height::Real=width*HW_RATIO)
-    update_theme!( size = figsize_from_inches(width, height))
+    update_theme!(size = figsize_from_inches(width, height))
 end
 
 
@@ -90,23 +128,35 @@ end
 Update the current theme with the given fontsize (in points).
 """
 function update_fontsize!(fontsize::Real)
-    smallfontsize = round(Int, 0.8*fontsize)
-    largefontsize = round(Int, 1.2*fontsize)
-    update_theme!(; fontsize=fontsize, Axis = (;make_font_settings(fontsize=fontsize)...))
+    update_theme!(; make_font_settings(fontsize=fontsize)...)
 end
 
-function make_font_settings(;fontsize=12)
+function make_font_settings(;fontsize::Real=12)
     small = floor(Int, 0.8*fontsize)
     large = ceil(Int, 1.2*fontsize)
     medium = fontsize
 
-    return Dict(
-        :titlesize=>large,
-        :subtitlesize=>large,
-        :xlabelsize=>medium,
-        :ylabelsize=>medium,
-        :xticklabelsize=>small,
-        :yticklabelsize=>small,
+    return (
+        fontsize = fontsize,
+        Axis = (;
+            titlesize=large,
+            subtitlesize=large,
+            xlabelsize=medium,
+            ylabelsize=medium,
+            xticklabelsize=small,
+            yticklabelsize=small,
+       ),
+        Legend = (;
+            labelsize = small,
+            titlesize = medium,
+           ),
+        Label = (;
+            fontsize = large,
+       ),
+        Colorbar = (;
+            labelsize = medium,
+            ticklabelsize = small,
+        )
     )
 end
 
