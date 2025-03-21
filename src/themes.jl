@@ -12,14 +12,15 @@ const UNITS_PER_INCH = 72
 const HW_RATIO = 3/4
 
 
-COLORS = Makie.wong_colors()
+const COLORS = parse.(Colorant, ["#0173b2ff", "#de8f05ff", "#029e73ff", "#d55e00ff", "#cc78bcff", 
+                                 "#ca9161ff", "#fbafe4ff", "#949494ff", "#ece133ff", "#56b4e9ff"])
 
 const DefaultLinearTicks = WilkinsonTicks(5,
 	Q = [(1.0, 1.0), (5.0, 0.9), (2.0, 0.7)]
 )
 
 
-function theme_arya(; width=3.25, fontsize=12, px_per_unit=4)
+function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
     # for a 12pt font size in the times font,
     # the em dash is 12 pt long and 0.6 pt high
     # the recommended minimum element size is 0.3 pt. 
@@ -33,38 +34,93 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4)
     x = smallfontsize / 12
     lw = x 
     slw = x/2
-    padding = 4x
+    padding = 3x
+
+    # full cycle of markers x colors
+
+    hollowmarkers = [false, false, false, false,
+                     true, true, true, false]
+    markers = [:circle, :utriangle, :star5, :rect, 
+               :diamond, :dtriangle, :pentagon, :xcross]
+    @assert length(hollowmarkers) == length(markers)
+
+    Nmarker = length(markers)
+    Ncolor = length(COLORS)
+    markercolors = repeat(COLORS, Nmarker)
+    hollowmarkers = repeat(hollowmarkers, Ncolor)
+    transparent = RGBAf(0.0, 0.0, 0.0, 0.0)
+
+    # Making hollow markers by setting the marker face color to transparent
+    markerstrokecolors = copy(markercolors)
+    N = 0
+    for i in eachindex(markercolors)
+        hollowmarkers[i] && (markercolors[i] = transparent)
+    end
+
+    markerstrokewidth = slw .* hollowmarkers
+
+    scattercycle = Cycle(
+        [
+         :marker => :marker, 
+         :color => :markercolor, 
+         :strokecolor => :markerstrokecolor,
+         :strokewidth => :markerstrokewidth,
+        ], covary = true)
+
+    linecycle = Cycle(
+        [
+         :color=>:color, 
+         :linestyle=>:linestyle,
+        ], covary = true)
+    cycle = Cycle([:color])
 
     arya = Theme(
-        px_per_unit=px_per_unit, # controls resolution for rasterization
-        pt_per_unit=1, # units are points so 72 units / inch.
-        figure_padding=2padding,
+        px_per_unit = px_per_unit, # controls resolution for rasterization
+        pt_per_unit = 1, # units are points so 72 units / inch.
+        figure_padding = 2padding,
         linewidth = lw,
-        markersize = 3lw,
+        markersize = 6lw,
+        markerstrokewidth = 0,
+        patchstrokewidth = 0,
         size = figsize_from_inches(width),
         colormap=get_arya_cmap(),
+        rowgap = smallfontsize,
+        colgap = 18x,
+        fontsize = fontsize,
+        palette = (;
+            color = COLORS,
+            patchcolor = COLORS,
+            linestyle = [nothing, :dash, :dot, :dashdot, :dashdotdot],
+            markercolor = markercolors,
+            marker = markers,
+            markerstrokecolor = markerstrokecolors,
+            markerstrokewidth = markerstrokewidth,
+       ),
         fonts = (;
             regular = Makie.texfont(:regular),
             bold = Makie.texfont(:bold),
             italic =  Makie.texfont(:italic),
             bold_italic =  Makie.texfont(:bolditalic),
             ),
-        fontsize = fontsize,
         Axis = (; 
             xticks = DefaultLinearTicks,
             yticks = DefaultLinearTicks,
             xtickwidth = lw,
             ytickwidth = lw,
-            xticklength = 3x,
-            yticklength = 3x,
+            xticksize = 3x, # xticksize?
+            yticksize = 3x,
+            xticklabelpad = 2x,
+            yticklabelpad = 2x,
+            xlabelpad = 3x,
+            ylabelpad = 3x,
             xminorticksvisible = true,
             yminorticksvisible = true,
             xminorticks = SmartMinorTicks(),
             yminorticks = SmartMinorTicks(),
             xminortickwidth = slw,
             yminortickwidth = slw,
-            xminorticklength = 1.5x,
-            yminorticklength = 1.5x,
+            xminorticksize = 2x,
+            yminorticksize = 2x,
             xticksmirrored = true,
             yticksmirrored = true,
             xtickalign = 1,
@@ -82,17 +138,30 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4)
             minorticksvisible = true,
             minorticks = SmartMinorTicks(),
             minortickwidth = slw,
-            minorticklength = 1.5x,
+            minorticksize = 1.5x,
             spinewidth = lw,
         ),
         Legend = (;
-            padding = (2x, 2x, 2x, 2x),
-            colgap = 2x,
-            patchsize = (5x, 5x),
-            patchstrokewidth = lw,
+            padding = (6x, 6x, 6x, 6x),
+            patchsize = (12x, 6x),
             framewidth = lw,
+            labelsize = smallfontsize,
         ),
-        CairoMakie = (; px_per_unit=px_per_unit, type="svg"),
+        Scatter = (;
+            cycle = scattercycle
+           ),
+        Lines = (;
+            cycle = linecycle
+           ),
+        ErrorScatter = (;
+            cycle = cycle
+           ),
+        CairoMakie = (; 
+            type="svg", 
+            pt_per_unit=pt_per_unit,
+            px_per_unit=2px_per_unit, # for displaying better
+            antialias = :best,
+        ),
         GLMakie = (; px_per_unit=px_per_unit)
 
     )
@@ -132,15 +201,15 @@ function update_fontsize!(fontsize::Real)
 end
 
 function make_font_settings(;fontsize::Real=12)
-    small = floor(Int, 0.8*fontsize)
-    large = ceil(Int, 1.2*fontsize)
+    small = floor(Int, 10/12*fontsize)
+    large = ceil(Int, 14/12*fontsize)
     medium = fontsize
 
     return (
         fontsize = fontsize,
         Axis = (;
             titlesize=large,
-            subtitlesize=large,
+            subtitlesize=medium,
             xlabelsize=medium,
             ylabelsize=medium,
             xticklabelsize=small,
@@ -151,7 +220,7 @@ function make_font_settings(;fontsize::Real=12)
             titlesize = medium,
            ),
         Label = (;
-            fontsize = large,
+            fontsize = medium,
        ),
         Colorbar = (;
             labelsize = medium,

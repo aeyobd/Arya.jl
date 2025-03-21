@@ -93,7 +93,7 @@ function Makie.plot!(p::ErrorScatter)
         if length(s) > 159
             s = s[1:150] * "..."
         end
-        println(key, " ", s)
+        @debug "error bar kwargs: $key: $s"
     end
 
     if p.xerror.val !== nothing
