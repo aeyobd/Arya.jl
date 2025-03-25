@@ -16,11 +16,12 @@ const COLORS = parse.(Colorant, ["#0173b2ff", "#de8f05ff", "#029e73ff", "#d55e00
                                  "#ca9161ff", "#fbafe4ff", "#949494ff", "#ece133ff", "#56b4e9ff"])
 
 const DefaultLinearTicks = WilkinsonTicks(5,
-	Q = [(1.0, 1.0), (5.0, 0.9), (2.0, 0.7)]
+	Q = [(1.0, 1.0), (5.0, 0.9), (2.0, 0.7)],
+        k_min = 3,
 )
 
 
-function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
+function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=1)
     # for a 12pt font size in the times font,
     # the em dash is 12 pt long and 0.6 pt high
     # the recommended minimum element size is 0.3 pt. 
@@ -33,7 +34,7 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
     
     x = smallfontsize / 12
     lw = x 
-    slw = x/2
+    slw = 2/3 * x
     padding = 3x
 
     # full cycle of markers x colors
@@ -107,8 +108,8 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
             yticks = DefaultLinearTicks,
             xtickwidth = lw,
             ytickwidth = lw,
-            xticksize = 3x, # xticksize?
-            yticksize = 3x,
+            xticksize = 4x, # xticksize?
+            yticksize = 4x,
             xticklabelpad = 2x,
             yticklabelpad = 2x,
             xlabelpad = 3x,
@@ -119,8 +120,8 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
             yminorticks = SmartMinorTicks(),
             xminortickwidth = slw,
             yminortickwidth = slw,
-            xminorticksize = 2x,
-            yminorticksize = 2x,
+            xminorticksize = 3x,
+            yminorticksize = 3x,
             xticksmirrored = true,
             yticksmirrored = true,
             xtickalign = 1,
@@ -157,8 +158,8 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
             cycle = cycle
            ),
         CairoMakie = (; 
-            type="svg", 
-            pt_per_unit=pt_per_unit,
+            type=:png,
+            pt_per_unit=1pt_per_unit,
             px_per_unit=2px_per_unit, # for displaying better
             antialias = :best,
         ),
@@ -167,6 +168,7 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=2)
     )
 
     update_theme!(arya; make_font_settings(fontsize=fontsize)...)
+
     return arya
 end
 
