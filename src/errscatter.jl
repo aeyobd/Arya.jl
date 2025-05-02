@@ -187,7 +187,8 @@ function Makie.legendelements(plot::ErrorScatter, legend)
                 colormap = real_errorcolormap,
                 colorscale = real_errorcolorscale,
                 colorrange = real_errorcolorrange,
-                alpha = real_erroralpha
+                alpha = real_erroralpha,
+                linewidth = plot.linewidth,
                )
            )
     end
@@ -201,7 +202,8 @@ function Makie.legendelements(plot::ErrorScatter, legend)
                 colormap = real_errorcolormap,
                 colorscale = real_errorcolorscale,
                 colorrange = real_errorcolorrange,
-                alpha = real_erroralpha
+                alpha = real_erroralpha,
+                linewidth = plot.linewidth,
                )
            )
     end
