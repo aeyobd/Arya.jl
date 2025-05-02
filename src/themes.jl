@@ -41,8 +41,8 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=1)
 
     hollowmarkers = [false, false, false, false,
                      true, true, true, false]
-    markers = [:circle, :utriangle, :star5, :rect, 
-               :diamond, :dtriangle, :pentagon, :xcross]
+    markers = [:circle, :rect, :utriangle, :star5, 
+               :diamond, :pentagon, :dtriangle, :xcross]
     @assert length(hollowmarkers) == length(markers)
 
     Nmarker = length(markers)
