@@ -24,6 +24,8 @@ Note `alpha` attribute is broken in errorbars.
     errorcolormap = automatic
     "The colorrange of the errorbars"
     errorcolorrange = automatic
+    "The colorscale of the errorbars"
+    errorcolorscale = automatic
     "The alpha of the errorbars"
     erroralpha = automatic
 
@@ -31,7 +33,7 @@ Note `alpha` attribute is broken in errorbars.
     linewidth = @inherit linewidth
 
     "Sets the size of the markers"
-    size = @inherit markersize
+    markersize = @inherit markersize
     "Sets the strokecolor of the markers"
     strokecolor = @inherit markerstrokecolor
     "Sets the strokewidth of the markers"
@@ -76,6 +78,10 @@ function Makie.plot!(p::ErrorScatter)
     map!(real_errorcolorrange, p.colorrange, p.errorcolorrange) do crange, ecrange
         ecrange === automatic ? crange : ecrange
     end
+    real_errorcolorscale = Observable{Any}()
+    map!(real_errorcolorscale, p.colorscale, p.errorcolorscale) do cscale, ecscale
+        ecscale === automatic ? cscale : ecscale
+    end
 
 
     errorbar_kwargs = Dict(
@@ -83,6 +89,7 @@ function Makie.plot!(p::ErrorScatter)
         :color => real_errorcolor,
         :colormap => real_errorcolormap,
         :colorrange => real_errorcolorrange,
+        :colorscale => real_errorcolorscale,
         :alpha => real_erroralpha,
         :inspectable => p.inspectable,
     )
@@ -109,7 +116,7 @@ function Makie.plot!(p::ErrorScatter)
         strokecolor = p.strokecolor,
         strokewidth = p.strokewidth,
         marker = p.marker,
-        markersize = p.size,
+        markersize = p.markersize,
         colormap = p.colormap,
         colorscale = p.colorscale,
         colorrange = p.colorrange,
@@ -119,4 +126,86 @@ function Makie.plot!(p::ErrorScatter)
 
 
     return p
+end
+
+
+function Makie.legendelements(plot::ErrorScatter, legend)
+    extract_color = Makie.extract_color
+    choose_scalar = Makie.choose_scalar
+
+
+    real_erroralpha = Observable{Any}()
+    map!(real_erroralpha, plot.alpha, plot.erroralpha) do alpha, ealpha
+        ealpha === automatic ? alpha : ealpha
+    end
+
+    real_errorcolor  = Observable{Any}()
+    map!(real_errorcolor, plot.color, plot.errorcolor) do col, ecol
+        if ecol === automatic
+            return to_color(col)
+        else
+            return to_color(ecol)
+        end
+    end
+    real_errorcolormap = Observable{Any}()
+    map!(real_errorcolormap, plot.colormap, plot.errorcolormap) do cmap, ecmap
+        ecmap === automatic ? cmap : ecmap
+    end
+
+    real_errorcolorrange = Observable{Any}()
+    map!(real_errorcolorrange, plot.colorrange, plot.errorcolorrange) do crange, ecrange
+        ecrange === automatic ? crange : ecrange
+    end
+    real_errorcolorscale = Observable{Any}()
+    map!(real_errorcolorscale, plot.colorscale, plot.errorcolorscale) do cscale, ecscale
+        ecscale === automatic ? cscale : ecscale
+    end
+
+
+    elements = Makie.LegendElement[
+        Makie.MarkerElement(
+            plots = plot,
+            color = extract_color(plot, legend[:markercolor]),
+            marker = choose_scalar(plot.marker, legend[:marker]),
+            markersize = choose_scalar(plot.markersize, legend[:markersize]),
+            strokewidth = choose_scalar(plot.strokewidth, legend[:markerstrokewidth]),
+            strokecolor = choose_scalar(plot.strokecolor, legend[:markerstrokecolor]),
+            colormap = plot.colormap,
+            colorscale = plot.colorscale,
+            colorrange = plot.colorrange,
+            alpha = plot.alpha
+           ),
+   ]
+
+    
+    if plot.xerror.val !== nothing
+        pushfirst!(elements,
+            Makie.LineElement(
+                points = Point2f[(0., 0.5), (1.0, 0.5)],
+                plots = plot,
+                color = real_errorcolor,
+                colormap = real_errorcolormap,
+                colorscale = real_errorcolorscale,
+                colorrange = real_errorcolorrange,
+                alpha = real_erroralpha
+               )
+           )
+    end
+    
+    if plot.yerror.val !== nothing
+        pushfirst!(elements,
+            Makie.LineElement(
+                points = Point2f[(0.5, 0.), (0.5, 1.)],
+                plots = plot,
+                color = real_errorcolor,
+                colormap = real_errorcolormap,
+                colorscale = real_errorcolorscale,
+                colorrange = real_errorcolorrange,
+                alpha = real_erroralpha
+               )
+           )
+    end
+
+
+    return elements
 end
