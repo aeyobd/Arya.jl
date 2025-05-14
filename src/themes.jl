@@ -147,6 +147,12 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=1)
             patchsize = (12x, 6x),
             framewidth = lw,
             labelsize = smallfontsize,
+            colgap = 16x,
+            groupgap = 16x,
+            patchlabelgap = 6x,
+            rowgap = 3x,
+            titlegap = 8x,
+            titlesize = fontsize,
         ),
         Scatter = (;
             cycle = scattercycle
@@ -155,7 +161,9 @@ function theme_arya(; width=3.25, fontsize=12, px_per_unit=4, pt_per_unit=1)
             cycle = linecycle
            ),
         ErrorScatter = (;
-            cycle = cycle
+            cycle = cycle,
+            linewidth = lw,
+            markersize = 6lw
            ),
         CairoMakie = (; 
             type=:png,
