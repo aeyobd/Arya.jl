@@ -8,16 +8,16 @@ import Makie
     yerr = rand(100)
 
 
-    p = Arya.errscatter(x, y)
+    p = Arya.errorscatter(x, y)
     @test p isa Makie.FigureAxisPlot
 
 
-    p = Arya.errscatter(x, y, xerr=xerr, yerr=yerr)
+    p = Arya.errorscatter(x, y, xerror=xerr, yerror=yerr)
     @test p isa Makie.FigureAxisPlot
 
-    p = Arya.errscatter(x, y, yerr=yerr)
+    p = Arya.errorscatter(x, y, yerror=yerr)
     @test p isa Makie.FigureAxisPlot
 
-    p = Arya.errscatter(x, y, xerr=xerr)
+    p = Arya.errorscatter(x, y, xerror=xerr)
     @test p isa Makie.FigureAxisPlot
 end
