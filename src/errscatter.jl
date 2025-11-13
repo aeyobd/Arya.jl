@@ -1,7 +1,6 @@
 import Makie: automatic
 import Colors
 import Makie
-import MakieCore
 
 """
     errscatter(xs, ys; xerror, yerror, kwargs...)
@@ -41,8 +40,8 @@ Note `alpha` attribute is broken in errorbars.
     "Sets the marker type"
     marker = @inherit marker
 
-    MakieCore.mixin_generic_plot_attributes()...
-    MakieCore.mixin_colormap_attributes()...
+    Makie.mixin_generic_plot_attributes()...
+    Makie.mixin_colormap_attributes()...
 
     cycle = [:color]
 
