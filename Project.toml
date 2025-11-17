@@ -1,7 +1,7 @@
 name = "Arya"
 uuid = "415bc928-4679-4905-9aff-233f9524af88"
 authors = ["Daniel Boyea <aeyobd@gmail.com>"]
-version = "0.1.10-DEV-10"
+version = "0.1.10-DEV-11"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"

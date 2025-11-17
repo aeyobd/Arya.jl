@@ -51,25 +51,25 @@ end
 
 
 function plot!(sc::Hist2D{<:Tuple{AbstractVector{<:Real}, AbstractVector{<:Real}}})
-    x = vec(sc[1].val)
-    y = vec(sc[2].val)
+    x = vec(sc[1][])
+    y = vec(sc[2][])
     
-    if sc.limits.val == nothing
+    if sc.limits[] == nothing
         # TODO: need alternative to current_axis()?
         sc.limits = current_axis().limits
     end
 
-    h = histogram2d(x, y, sc.bins.val, 
-        weights=sc.weights.val, limits=sc.limits.val, normalization=sc.normalization.val
+    h = histogram2d(x, y, sc.bins[], 
+                    weights=sc.weights[], limits=sc.limits[], normalization=sc.normalization[]
        )
 
 
-    colorrange = DensityEstimators.calc_limits(h.values, sc.colorrange.val)
+    colorrange = DensityEstimators.calc_limits(h.values, sc.colorrange[])
     println("using colorrange: ", colorrange)
 
     #println("using limits: ", sc.limits.val)
 
-    heatmap!(sc, h, colormap=sc.colormap.val, 
+    heatmap!(sc, h, colormap=sc.colormap[], 
         colorrange=colorrange, 
         colorscale=sc.colorscale
         )

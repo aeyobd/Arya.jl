@@ -66,7 +66,7 @@ function Makie.plot!(p::ErrorScatter)
         end
     end
 
-    # real_errorcolor[] = (real_errorcolor.val, real_alpha[])
+    # real_errorcolor[] = (real_errorcolor[], real_alpha[])
 
     real_errorcolormap = Observable{Any}()
     map!(real_errorcolormap, p.colormap, p.errorcolormap) do cmap, ecmap
@@ -102,11 +102,11 @@ function Makie.plot!(p::ErrorScatter)
         @debug "error bar kwargs: $key: $s"
     end
 
-    if p.xerror.val !== nothing
+    if p.xerror[] !== nothing
         errorbars!(p, x, y, p.xerror, direction=:x; errorbar_kwargs...)
     end
 
-    if p.yerror.val !== nothing
+    if p.yerror[] !== nothing
         errorbars!(p, x, y, p.yerror, direction=:y; errorbar_kwargs...)
     end
 
@@ -177,7 +177,7 @@ function Makie.legendelements(plot::ErrorScatter, legend)
    ]
 
     
-    if plot.xerror.val !== nothing
+    if plot.xerror[] !== nothing
         pushfirst!(elements,
             Makie.LineElement(
                 points = Point2f[(0., 0.5), (1.0, 0.5)],
@@ -192,7 +192,7 @@ function Makie.legendelements(plot::ErrorScatter, legend)
            )
     end
     
-    if plot.yerror.val !== nothing
+    if plot.yerror[] !== nothing
         pushfirst!(elements,
             Makie.LineElement(
                 points = Point2f[(0.5, 0.), (0.5, 1.)],
